@@ -1,0 +1,122 @@
+syntax = "proto3";
+package types;
+option go_package = "github.com/itohio/phingo/pkg/types";
+
+message Config {
+    message Style {
+        string what = 1;
+        string font = 2;
+        string align = 3;
+    }
+    message Export {
+        string what = 1;
+        repeated Style styles = 2;
+    }
+
+    repeated Export export = 10;
+
+    map<string, string> params = 100;
+}
+
+message Price {
+    string denom = 1;
+    int64 amount = 2;
+}
+
+message Contact {
+    string what = 1;
+    string contact = 2;
+}
+
+
+message Account {
+    string id = 1;
+    string name = 2;
+    string denom = 3;
+    repeated Contact contact = 10;
+}
+
+message Accounts {
+    repeated Account accounts = 1;
+    map<string, string> params = 2;
+}
+
+message Client {
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    repeated string notes = 4;
+    repeated Contact contact = 5;
+    string account = 6;
+}
+
+message Clients {
+    repeated Client clients = 1;
+    map<string, string> params = 2;
+}
+
+message Project {
+    message Checkin {
+        string description = 1;
+        string start = 2;
+        int64 duration = 3;
+    }
+    
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    string fileName = 4;
+
+    oneof rate {
+        Price hourly = 5;
+        Price total = 6;
+    }
+    bool completed = 7;
+    string client = 8;
+    string account = 9;
+    map<string, string> params = 10;
+    repeated Checkin checkins = 30;
+}
+
+
+message Invoice {
+    message Entry {
+        string name = 1;
+        int64 items = 2;
+        Price itemPrice = 3;
+        Price total = 4;
+    }
+    string fileName = 1;
+    string id = 2;
+    string date = 3;
+    string year = 4;
+    string project = 5;
+    string client = 6;
+    string account = 7;
+    map<string, string> params = 8;
+    repeated Entry items = 10;
+}
+
+message Template {
+    string fileName = 1;
+    string id = 2;
+    string what = 3;
+    map<string, string> params = 4;
+    bytes text = 10;
+}
+
+message ProjectTemplateContext {
+    Config config = 1;
+    Client client = 2;
+    Account account = 3;
+    Template template = 4;
+    repeated Project projects = 5;
+}
+
+message InvoiceTemplateContext {
+    Config config = 1;
+    Client client = 2;
+    Account account = 3;
+    Template template = 4;
+    repeated Invoice invoices = 6;
+}
