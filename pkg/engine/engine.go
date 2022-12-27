@@ -13,7 +13,9 @@ type Engine interface {
 	// Meta will extract meta information from a template
 	Meta(tpl *types.Template) (map[string]interface{}, error)
 
-	ExportProjects(writer io.Writer, tpl *types.Template, projects []*types.Project, account *types.Account) error
+	ExportAccounts(writer io.Writer, tpl *types.Template, accounts []*types.Account) error
+	ExportClients(writer io.Writer, tpl *types.Template, clients []*types.Client) error
+	ExportProjects(writer io.Writer, tpl *types.Template, projects []*types.Project) error
 	ExportInvoices(writer io.Writer, tpl *types.Template, invoices []*types.Invoice, account *types.Account) error
 }
 

@@ -2,11 +2,16 @@ package repository
 
 import (
 	"io/fs"
-	"log"
 	"os"
 
+	defaultRepo "github.com/itohio/phingo/pkg/repository/default"
 	"github.com/itohio/phingo/pkg/types"
 )
+
+type modifyStruct struct {
+	delete   bool
+	filename string
+}
 
 type repository struct {
 	url       string
@@ -18,11 +23,40 @@ type repository struct {
 	templates []*types.Template
 	projects  []*types.Project
 	invoices  []*types.Invoice
+
+	configModified    bool
+	accountsModified  bool
+	clientsModified   bool
+	templatesModified map[string]modifyStruct
+	projectsModified  map[string]modifyStruct
+	invoicesModified  map[string]modifyStruct
 }
 
 func New(url string) (*repository, error) {
 	ret := &repository{
-		url: url,
+		url:               url,
+		config:            defaultRepo.DefaultConfig(),
+		accounts:          defaultRepo.DefaultAccounts(),
+		clients:           defaultRepo.DefaultClients(),
+		templates:         defaultRepo.DefaultTemplates(),
+		projects:          defaultRepo.DefaultProjects(),
+		invoices:          defaultRepo.DefaultInvoices(),
+		templatesModified: make(map[string]modifyStruct),
+		projectsModified:  make(map[string]modifyStruct),
+		invoicesModified:  make(map[string]modifyStruct),
+		configModified:    true,
+		accountsModified:  true,
+		clientsModified:   true,
+	}
+
+	for _, val := range ret.templates {
+		ret.templatesModified[val.Id] = modifyStruct{}
+	}
+	for _, val := range ret.projects {
+		ret.projectsModified[val.Id] = modifyStruct{}
+	}
+	for _, val := range ret.invoices {
+		ret.invoicesModified[val.Id] = modifyStruct{}
 	}
 
 	switch {
@@ -93,7 +127,9 @@ func (r *repository) Accounts(id ...string) []*types.Account {
 	acc := make([]*types.Account, 0, len(mid))
 	for _, a := range r.accounts.Accounts {
 		if _, ok := mid[a.Id]; !ok && len(id) != 0 {
-			continue
+			if _, ok := mid[a.Name]; !ok && len(id) != 0 {
+				continue
+			}
 		}
 		acc = append(acc, a)
 	}
@@ -110,7 +146,9 @@ func (r *repository) Clients(id ...string) []*types.Client {
 	acc := make([]*types.Client, 0, len(mid))
 	for _, a := range r.clients.Clients {
 		if _, ok := mid[a.Id]; !ok && len(id) != 0 {
-			continue
+			if _, ok := mid[a.Name]; !ok && len(id) != 0 {
+				continue
+			}
 		}
 		acc = append(acc, a)
 	}
@@ -127,7 +165,9 @@ func (r *repository) Projects(id ...string) []*types.Project {
 	acc := make([]*types.Project, 0, len(mid))
 	for _, a := range r.projects {
 		if _, ok := mid[a.Id]; !ok && len(id) != 0 {
-			continue
+			if _, ok := mid[a.Name]; !ok && len(id) != 0 {
+				continue
+			}
 		}
 		acc = append(acc, a)
 	}
@@ -163,7 +203,6 @@ func (r *repository) Templates(id ...string) []*types.Template {
 		if _, ok := mid[a.Id]; !ok && len(id) != 0 {
 			continue
 		}
-		log.Println(a.FileName, a.Id, a.Text)
 		acc = append(acc, a)
 	}
 

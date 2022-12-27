@@ -21,10 +21,37 @@ func (e *engine) Meta(tpl *types.Template) (map[string]interface{}, error) {
 	return nil, nil
 }
 
-func (e *engine) ExportProjects(writer io.Writer, tpl *types.Template, projects []*types.Project, account *types.Account) error {
+func (e *engine) ExportAccounts(writer io.Writer, tpl *types.Template, accounts []*types.Account) error {
+	context := &types.AccountTemplateContext{
+		Config:   e.cfg,
+		Template: tpl,
+		Accounts: accounts,
+	}
+	t, err := template.New(tpl.What).Parse(string(tpl.Text))
+	if err != nil {
+		return nil
+	}
+
+	return t.Execute(writer, context)
+}
+
+func (e *engine) ExportClients(writer io.Writer, tpl *types.Template, clients []*types.Client) error {
+	context := &types.ClientTemplateContext{
+		Config:   e.cfg,
+		Template: tpl,
+		Clients:  clients,
+	}
+	t, err := template.New(tpl.What).Parse(string(tpl.Text))
+	if err != nil {
+		return nil
+	}
+
+	return t.Execute(writer, context)
+}
+
+func (e *engine) ExportProjects(writer io.Writer, tpl *types.Template, projects []*types.Project) error {
 	context := &types.ProjectTemplateContext{
 		Config:   e.cfg,
-		Account:  account,
 		Template: tpl,
 		Projects: projects,
 	}

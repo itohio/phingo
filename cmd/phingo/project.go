@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"log"
 	"os"
 
 	"github.com/itohio/phingo/pkg/engine"
@@ -18,17 +19,15 @@ func newProjectCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		newProjectAddCmd(),
+		newProjectSetCmd(),
 		newProjectShowCmd(),
-		newProjectUpdateCmd(),
 		newProjectDeleteCmd(),
-		newProjectExportCmd(),
 	)
 
 	return cmd
 }
 
-func newProjectAddCmd() *cobra.Command {
+func newProjectSetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "add",
 		Version: version.Version,
@@ -36,6 +35,12 @@ func newProjectAddCmd() *cobra.Command {
 		Long:    ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return nil
+		},
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return globalRepository.Read()
+		},
+		PostRunE: func(cmd *cobra.Command, args []string) error {
+			return globalRepository.Write()
 		},
 	}
 
@@ -62,13 +67,12 @@ func newProjectShowCmd() *cobra.Command {
 			if len(tpl) == 0 {
 				return errors.New("please create a projects.md template")
 			}
-			acc := globalRepository.Accounts()
-			if len(acc) == 0 {
-				return errors.New("please add an account")
-			}
 			projects := globalRepository.Projects(args...)
 
-			return export.ExportProjects(os.Stdout, tpl[0], projects, acc[0])
+			return export.ExportProjects(os.Stdout, tpl[0], projects)
+		},
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return globalRepository.Read()
 		},
 	}
 
@@ -76,43 +80,34 @@ func newProjectShowCmd() *cobra.Command {
 }
 
 func newProjectDeleteCmd() *cobra.Command {
+	var skip *bool
 	cmd := &cobra.Command{
-		Use:     "delete",
+		Use:     "del",
 		Version: version.Version,
-		Short:   "delete projects",
+		Short:   "delete project",
 		Long:    ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			projects := globalRepository.Projects(args...)
+			for _, c := range projects {
+				log.Println("Deleting project id=", c.Id, "name=", c.Name)
+				if err := globalRepository.DelProject(c); err != nil {
+					if *skip {
+						log.Println("Failed deleting id=", c.Id, "name=", c.Name, "err=", err.Error())
+						continue
+					}
+					return err
+				}
+			}
 			return nil
 		},
-	}
-
-	return cmd
-}
-
-func newProjectUpdateCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "update",
-		Version: version.Version,
-		Short:   "update a project",
-		Long:    ``,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return nil
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return globalRepository.Read()
+		},
+		PostRunE: func(cmd *cobra.Command, args []string) error {
+			return globalRepository.Write()
 		},
 	}
-
-	return cmd
-}
-
-func newProjectExportCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "export",
-		Version: version.Version,
-		Short:   "export projects",
-		Long:    ``,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return nil
-		},
-	}
+	skip = cmd.Flags().BoolP("ignore-errors", "i", false, "Skip any errors")
 
 	return cmd
 }

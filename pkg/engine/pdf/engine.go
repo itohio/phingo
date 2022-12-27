@@ -50,7 +50,14 @@ func (e *engine) Meta(tpl *types.Template) (map[string]interface{}, error) {
 	return document.OwnerDocument().Meta(), nil
 }
 
-func (e *engine) ExportProjects(writer io.Writer, tpl *types.Template, projects []*types.Project, account *types.Account) error {
+func (e *engine) ExportAccounts(writer io.Writer, tpl *types.Template, accounts []*types.Account) error {
+	return e.md.Convert(tpl.Text, writer)
+}
+func (e *engine) ExportClients(writer io.Writer, tpl *types.Template, clients []*types.Client) error {
+	return e.md.Convert(tpl.Text, writer)
+}
+
+func (e *engine) ExportProjects(writer io.Writer, tpl *types.Template, projects []*types.Project) error {
 	return e.md.Convert(tpl.Text, writer)
 }
 

@@ -7,6 +7,8 @@ import (
 )
 
 func newRootCmd(commands ...*cobra.Command) *cobra.Command {
+	var repoUrl *string
+
 	var rootCmd = &cobra.Command{
 		Use:     "phingo",
 		Version: version.Version,
@@ -14,7 +16,7 @@ func newRootCmd(commands ...*cobra.Command) *cobra.Command {
 		Long:    ``,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			var err error
-			globalRepository, err = repository.New(*flagRepositoryUrl)
+			globalRepository, err = repository.New(*repoUrl)
 			return err
 		},
 		PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
@@ -24,6 +26,8 @@ func newRootCmd(commands ...*cobra.Command) *cobra.Command {
 			return globalRepository.Close()
 		},
 	}
+
+	repoUrl = rootCmd.PersistentFlags().StringP("repository", "r", ".phingo", "Data Repository path.")
 
 	rootCmd.AddCommand(commands...)
 

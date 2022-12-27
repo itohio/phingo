@@ -1,3 +1,33 @@
 {
-    "accounts": [{}]
+  "accounts":  [
+    {
+      "id":  "some-id",
+      "name":  "some-name",
+      "denom":  "Eth",
+      "contact":  {
+        "Address":  "an address",
+        "Name":  "Name",
+        "Wallet":  "ethblsdkfslj"
+      }
+    },
+    {
+      "id":  "np0sDgmhVJ5nRsqnqyUTJ9Yibvo",
+      "name":  "ame",
+      "denom":  "enom",
+      "contact":  {
+        "My Email":  "email",
+        "My Name":  "My Name"
+      }
+    },
+    {
+      "id":  "Tzzqaz1FUkcl0qzXFloJQU+cr5Q",
+      "name":  "name",
+      "denom":  "denom",
+      "contact":  {
+        "My Email":  "email",
+        "My Name":  "My Name"
+      }
+    }
+  ],
+  "params":  {}
 }

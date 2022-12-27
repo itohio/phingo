@@ -23,17 +23,11 @@ message Price {
     int64 amount = 2;
 }
 
-message Contact {
-    string what = 1;
-    string contact = 2;
-}
-
-
 message Account {
     string id = 1;
     string name = 2;
     string denom = 3;
-    repeated Contact contact = 10;
+    map<string, string> contact = 10;
 }
 
 message Accounts {
@@ -46,8 +40,7 @@ message Client {
     string name = 2;
     string description = 3;
     repeated string notes = 4;
-    repeated Contact contact = 5;
-    string account = 6;
+    map<string, string> contact = 5;
 }
 
 message Clients {
@@ -56,10 +49,11 @@ message Clients {
 }
 
 message Project {
-    message Checkin {
+    message LogEntry {
         string description = 1;
         string start = 2;
         int64 duration = 3;
+        float progress = 4;
     }
     
     string id = 1;
@@ -72,51 +66,66 @@ message Project {
         Price total = 6;
     }
     bool completed = 7;
-    string client = 8;
-    string account = 9;
+
     map<string, string> params = 10;
-    repeated Checkin checkins = 30;
+
+    string startDate = 20;
+    string endDate = 21;
+
+    Account account = 31;
+    Client client = 30;
+
+    repeated LogEntry log = 50;
 }
 
 
 message Invoice {
     message Entry {
         string name = 1;
-        int64 items = 2;
-        Price itemPrice = 3;
+        int64 amount = 2;
+        Price price = 3;
         Price total = 4;
     }
     string fileName = 1;
     string id = 2;
     string date = 3;
     string year = 4;
-    string project = 5;
-    string client = 6;
-    string account = 7;
-    map<string, string> params = 8;
-    repeated Entry items = 10;
+
+    map<string, string> params = 10;
+    Project project = 30;
+    Account account = 31;
+    repeated Entry items = 50;
 }
 
 message Template {
-    string fileName = 1;
-    string id = 2;
-    string what = 3;
+    string id = 1;
+    string what = 2;
+    string fileName = 3;
     map<string, string> params = 4;
     bytes text = 10;
 }
 
+message AccountTemplateContext {
+    Config config = 1;
+    Template template = 2;
+    repeated Account accounts = 10;
+}
+
+message ClientTemplateContext {
+    Config config = 1;
+    Template template = 2;
+    repeated Client clients = 10;
+}
+
 message ProjectTemplateContext {
     Config config = 1;
-    Client client = 2;
-    Account account = 3;
-    Template template = 4;
-    repeated Project projects = 5;
+    Template template = 2;
+    repeated Project projects = 10;
 }
 
 message InvoiceTemplateContext {
     Config config = 1;
-    Client client = 2;
+    Template template = 2;
     Account account = 3;
-    Template template = 4;
-    repeated Invoice invoices = 6;
+    repeated Invoice invoices = 10;
 }

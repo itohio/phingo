@@ -1,1 +1,13 @@
-{}
+{
+  "id":  "first",
+  "name":  "FIRST",
+  "description":  "",
+  "fileName":  "projects/first.json",
+  "completed":  false,
+  "params":  {},
+  "startDate":  "",
+  "endDate":  "",
+  "account":  null,
+  "client":  null,
+  "log":  []
+}
