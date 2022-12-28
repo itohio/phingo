@@ -1,7 +1,7 @@
 {
   "accounts":  [
     {
-      "id":  "some-id",
+      "id":  "acc-id",
       "name":  "some-name",
       "denom":  "Eth",
       "contact":  {

@@ -129,7 +129,7 @@ func (r *repository) readProjects() error {
 				prj.Id = id
 			}
 			if prj.Name == "" {
-				prj.Name = strings.ToTitle(id)
+				prj.Name = strings.ToTitle(id[:1]) + id[1:]
 			}
 			prj.Account = r.resolveAccount(prj.Account)
 			prj.Client = r.resolveClient(prj.Client)

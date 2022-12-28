@@ -1,1 +1,9 @@
-{}
+{
+    "clients": [
+        {
+            "id": "client-id",
+            "name": "westeros",
+            "description": "very profitable deal"
+        }
+    ]
+}

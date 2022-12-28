@@ -106,7 +106,7 @@ func (r *repository) writeTemplates() error {
 		}
 
 		_, ok := r.templatesModified[tpl.Id]
-		if ok {
+		if !ok {
 			continue
 		}
 
@@ -137,7 +137,7 @@ func (r *repository) writeProjects() error {
 		}
 
 		_, ok := r.projectsModified[val.Id]
-		if ok {
+		if !ok {
 			continue
 		}
 
@@ -185,7 +185,7 @@ func (r *repository) writeInvoices() error {
 		}
 
 		_, ok := r.invoicesModified[val.Id]
-		if ok {
+		if !ok {
 			continue
 		}
 

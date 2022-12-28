@@ -2,7 +2,9 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"os"
+	"strings"
 
 	"github.com/itohio/phingo/pkg/engine"
 	"github.com/itohio/phingo/pkg/types"
@@ -13,6 +15,7 @@ import (
 func newExportCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "export",
+		Aliases: []string{"exp", "ex", "e"},
 		Version: version.Version,
 		Short:   "Export phinancial records",
 		Long:    ``,
@@ -55,9 +58,10 @@ func newExportProjectCmd() *cobra.Command {
 		template *string
 		output   *string
 		cmd      = &cobra.Command{
-			Use:     "export",
+			Use:     "project",
+			Aliases: []string{"prj", "pr", "p"},
 			Version: version.Version,
-			Short:   "Export phinancial records",
+			Short:   "Export projects records",
 			Long:    ``,
 			PreRunE: func(cmd *cobra.Command, args []string) error {
 				return globalRepository.Read()
@@ -78,7 +82,11 @@ func newExportProjectCmd() *cobra.Command {
 
 				projects := globalRepository.Projects(args...)
 
-				w, err := os.Create(*output)
+				fname := *output
+				if !strings.Contains(*output, ".") {
+					fname = fmt.Sprintf("%s.%s", *output, *how)
+				}
+				w, err := os.Create(fname)
 				if err != nil {
 					return err
 				}
@@ -90,7 +98,7 @@ func newExportProjectCmd() *cobra.Command {
 	)
 	how = cmd.Flags().StringP("how", "w", "pdf", "Defines how to export the entries (possible values are html and pdf)")
 	template = cmd.Flags().StringP("template", "t", "projects", "what template to use")
-	output = cmd.Flags().StringP("output", "o", "projects.pdf", "path to file to write output to")
+	output = cmd.Flags().StringP("output", "o", "projects", "path to file to write output to")
 	return cmd
 }
 

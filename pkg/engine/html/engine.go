@@ -2,14 +2,10 @@ package engine
 
 import (
 	"bytes"
-	"context"
-	"image/color"
 	"io"
-	"os"
 
 	markdown "github.com/itohio/phingo/pkg/engine/markdown"
 	"github.com/itohio/phingo/pkg/types"
-	pdf "github.com/stephenafamo/goldmark-pdf"
 	"github.com/yuin/goldmark"
 	meta "github.com/yuin/goldmark-meta"
 	"github.com/yuin/goldmark/extension"
@@ -33,17 +29,6 @@ func New(config *types.Config) (*Engine, error) {
 			extension.CJK,
 			meta.New(
 				meta.WithStoresInDocument(),
-			),
-		),
-		goldmark.WithRenderer(
-			pdf.New(
-				pdf.WithTraceWriter(os.Stderr),
-				pdf.WithContext(context.Background()),
-				pdf.WithImageFS(os.DirFS(".")),
-				pdf.WithLinkColor(color.RGBA{R: 0xCC, G: 0x45, B: 0x78, A: 255}),
-				pdf.WithHeadingFont(pdf.GetTextFont("IBM Plex Serif", pdf.FontLora)),
-				pdf.WithBodyFont(pdf.GetTextFont("Open Sans", pdf.FontRoboto)),
-				pdf.WithCodeFont(pdf.GetCodeFont("Inconsolata", pdf.FontRobotoMono)),
 			),
 		),
 	)

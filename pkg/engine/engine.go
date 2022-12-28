@@ -4,7 +4,8 @@ import (
 	"errors"
 	"io"
 
-	console "github.com/itohio/phingo/pkg/engine/console"
+	html "github.com/itohio/phingo/pkg/engine/html"
+	markdown "github.com/itohio/phingo/pkg/engine/markdown"
 	pdf "github.com/itohio/phingo/pkg/engine/pdf"
 	"github.com/itohio/phingo/pkg/types"
 )
@@ -23,8 +24,14 @@ func New(what string, config *types.Config) (Engine, error) {
 	switch what {
 	case "pdf":
 		return pdf.New(config)
+	case "htm":
+		fallthrough
+	case "html":
+		return html.New(config)
 	case "console":
-		return console.New(config)
+		fallthrough
+	case "markdown":
+		return markdown.New(config)
 	default:
 		return nil, errors.New("export engine unknown")
 	}
