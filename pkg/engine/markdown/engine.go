@@ -3,7 +3,6 @@ package engine
 import (
 	"io"
 	"text/template"
-	"time"
 
 	"github.com/itohio/phingo/pkg/types"
 )
@@ -57,49 +56,7 @@ func (e *Engine) ExportProjects(writer io.Writer, tpl *types.Template, projects 
 		Projects: projects,
 	}
 	t := template.New(tpl.What)
-	t.Funcs(template.FuncMap{
-		"TotalProgress": func(p *types.Project) float32 {
-			if p == nil {
-				return 0
-			}
-			return p.TotalProgress()
-		},
-		"TotalPrice": func(p *types.Project) string {
-			pr := p.TotalPrice()
-			if pr == nil {
-				return "-"
-			}
-			return pr.Pretty()
-		},
-		"TotalDuration": func(p *types.Project) string {
-			if p == nil {
-				return "-"
-			}
-			return p.TotalDuration().String()
-		},
-		"Rate": func(p *types.Project) string {
-			if p == nil {
-				return "-"
-			}
-			return p.RateString()
-		},
-		"Price": func(p *types.Project, l *types.Project_LogEntry) string {
-			if p == nil {
-				return "-"
-			}
-			if l == nil {
-				return "-"
-			}
-			pr := l.Price(p)
-			return pr.Pretty()
-		},
-		"Duration": func(l *types.Project_LogEntry) string {
-			if l == nil {
-				return "-"
-			}
-			return time.Duration(l.Duration).String()
-		},
-	})
+	t.Funcs(makeProjectFuncs(context))
 	t, err := t.Parse(string(tpl.Text))
 	if err != nil {
 		return err
@@ -115,7 +72,9 @@ func (e *Engine) ExportInvoices(writer io.Writer, tpl *types.Template, invoices 
 		Template: tpl,
 		Invoices: invoices,
 	}
-	t, err := template.New(tpl.What).Parse(string(tpl.Text))
+	t := template.New(tpl.What)
+	t.Funcs(makeInvoiceFuncs(context))
+	t, err := t.Parse(string(tpl.Text))
 	if err != nil {
 		return err
 	}

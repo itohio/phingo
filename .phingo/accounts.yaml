@@ -1,0 +1,20 @@
+accounts:
+    - contact:
+        Address: an address
+        Full Name: Name
+        Wallet Address: ethblsdkfslj
+      denom: Eth
+      id: acc-id
+      name: some-name
+    - contact:
+        Email: email
+        Full Name: My Name
+      denom: enom
+      id: np0sDgmhVJ5nRsqnqyUTJ9Yibvo
+      name: ame
+    - contact:
+        Email: email
+        Full Name: My Name
+      denom: denom
+      id: Tzzqaz1FUkcl0qzXFloJQU+cr5Q
+      name: name

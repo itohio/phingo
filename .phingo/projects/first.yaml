@@ -1,0 +1,29 @@
+account:
+    id: acc-id
+client:
+    id: client-id
+fileName: projects/first.yaml
+hourly:
+    amount: 75
+    denom: Eur
+id: first
+log:
+    - description: some simple test
+      duration: "120000000000"
+      progress: 10
+      start: 2022-12-28 02:26
+    - description: some simple test
+      duration: "120000000000"
+      progress: 20
+      start: 2022-12-28 02:27
+    - description: some simple test
+      duration: "120000000000"
+      progress: -5
+      start: 2022-12-28 02:27
+    - description: some simple test
+      duration: "1800000000000"
+      progress: 50
+      start: 2022-12-28 02:27
+name: First
+params:
+    key: value

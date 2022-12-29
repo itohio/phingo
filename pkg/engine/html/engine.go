@@ -9,7 +9,10 @@ import (
 	"github.com/yuin/goldmark"
 	meta "github.com/yuin/goldmark-meta"
 	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
 	"github.com/yuin/goldmark/text"
+	"github.com/yuin/goldmark/util"
 )
 
 type Engine struct {
@@ -30,6 +33,17 @@ func New(config *types.Config) (*Engine, error) {
 			meta.New(
 				meta.WithStoresInDocument(),
 			),
+			extension.NewTable(
+				extension.WithTableCellAlignMethod(extension.TableCellAlignAttribute),
+			),
+		),
+		goldmark.WithParserOptions(
+			parser.WithAttribute(),
+			parser.WithHeadingAttribute(),
+			parser.WithASTTransformers(util.Prioritized(&TableASTTransformer{}, 1000)),
+		),
+		goldmark.WithRendererOptions(
+			html.WithUnsafe(),
 		),
 	)
 
@@ -51,6 +65,7 @@ func (e *Engine) ExportAccounts(writer io.Writer, tpl *types.Template, accounts 
 	}
 	return e.md.Convert(buf.Bytes(), writer)
 }
+
 func (e *Engine) ExportClients(writer io.Writer, tpl *types.Template, clients []*types.Client) error {
 	buf := bytes.NewBuffer(nil)
 	if err := e.mde.ExportClients(buf, tpl, clients); err != nil {

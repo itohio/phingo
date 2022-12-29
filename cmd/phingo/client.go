@@ -23,6 +23,7 @@ func newClientCmd() *cobra.Command {
 	cmd.AddCommand(
 		newClientDelCmd(),
 		newClientSetCmd(),
+		newClientContactCmd(),
 		newClientShowCmd(),
 	)
 
@@ -112,6 +113,64 @@ func newClientSetCmd() *cobra.Command {
 
 	return cmd
 
+}
+
+func newClientContactCmd() *cobra.Command {
+	var (
+		contact *[]string
+	)
+
+	cmd := &cobra.Command{
+		Use:     "contact",
+		Version: version.Version,
+		Short:   "set/add/delete contacts",
+		Long:    `will delete contact key if value is empty`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return errors.New("at least one account id/name and one contact must be provided")
+			}
+			clients := globalRepository.Clients(args...)
+
+			contacts := make(map[string]string, len(*contact))
+			for _, c := range *contact {
+				kv := strings.SplitN(c, "=", 2)
+				log.Println("kv", kv)
+				if len(kv) == 2 {
+					contacts[kv[0]] = kv[1]
+				} else {
+					contacts[kv[0]] = ""
+				}
+			}
+
+			for _, cl := range clients {
+				if cl.Contact == nil {
+					cl.Contact = make(map[string]string)
+				}
+				for k, v := range contacts {
+					if v == "" {
+						delete(cl.Contact, k)
+					} else {
+						cl.Contact[k] = v
+					}
+				}
+
+				err := globalRepository.SetClient(cl)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return globalRepository.Read()
+		},
+		PostRunE: func(cmd *cobra.Command, args []string) error {
+			return globalRepository.Write()
+		},
+	}
+	contact = cmd.Flags().StringArrayP("contact", "c", nil, "Key-value pair for contact information, e.g. \"Name=My name\"")
+
+	return cmd
 }
 
 func newClientShowCmd() *cobra.Command {

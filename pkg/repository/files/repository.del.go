@@ -61,7 +61,7 @@ func (r *repository) DelProject(prj *types.Project) error {
 	}
 	for _, val := range r.invoices {
 		if val.Project != nil && val.Project.Id == prj.Id {
-			return errors.New("client is being used by a project")
+			return errors.New("project is being used by an invoice")
 		}
 	}
 	var err error

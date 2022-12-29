@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"io/fs"
+	"io"
 	"os"
+	"strings"
 
 	defaultRepo "github.com/itohio/phingo/pkg/repository/default"
 	"github.com/itohio/phingo/pkg/types"
@@ -15,8 +16,7 @@ type modifyStruct struct {
 
 type repository struct {
 	url       string
-	fs        fs.FS
-	wfs       fs.FS
+	fs        defaultRepo.RWFS
 	config    *types.Config
 	accounts  *types.Accounts
 	clients   *types.Clients
@@ -60,17 +60,29 @@ func New(url string) (*repository, error) {
 	}
 
 	switch {
-	// case strings.HasSuffix(url, "tar"):
-	// 	ret.fs = tar.NewReader()
+	case strings.HasSuffix(url, "tar.gz"):
+		fallthrough
+	case strings.HasSuffix(url, "tar"):
+		fsys, err := newTarFS(url)
+		if err != nil {
+			return nil, err
+		}
+		ret.fs = fsys
 	default:
-		ret.fs = os.DirFS(url)
-		ret.wfs = ret.fs
+		fsys, err := defaultRepo.NewOSWrapper(os.DirFS(url))
+		if err != nil {
+			return nil, err
+		}
+		ret.fs = fsys
 	}
 
 	return ret, nil
 }
 
 func (r *repository) Read() error {
+	if closer, ok := r.fs.(io.Closer); ok {
+		defer closer.Close()
+	}
 	if err := r.readConfig(); err != nil {
 		return err
 	}
@@ -93,6 +105,9 @@ func (r *repository) Read() error {
 }
 
 func (r *repository) Write() error {
+	if closer, ok := r.fs.(io.Closer); ok {
+		defer closer.Close()
+	}
 	if err := r.writeConfig(); err != nil {
 		return err
 	}

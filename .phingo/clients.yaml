@@ -1,0 +1,9 @@
+clients:
+    - contact:
+        Address: an address
+        Director: someone important
+        Full Name: a full Name
+        Name: a Name
+      description: very profitable deal
+      id: client-id
+      name: westeros

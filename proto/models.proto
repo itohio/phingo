@@ -2,6 +2,10 @@ syntax = "proto3";
 package types;
 option go_package = "github.com/itohio/phingo/pkg/types";
 
+message Locale {
+    map<string, string> translations = 1;
+}
+
 message Config {
     message Style {
         string what = 1;
@@ -16,18 +20,24 @@ message Config {
     repeated Export export = 10;
 
     map<string, string> params = 100;
+
+    Locale locale = 500;
 }
 
 message Price {
     string denom = 1;
     float amount = 2;
+    uint32 decimals = 3;
 }
 
 message Account {
     string id = 1;
     string name = 2;
     string denom = 3;
+    int32 decimals = 4;
     map<string, string> contact = 10;
+
+    Locale locale = 500;
 }
 
 message Accounts {
@@ -41,6 +51,8 @@ message Client {
     string description = 3;
     repeated string notes = 4;
     map<string, string> contact = 5;
+
+    Locale locale = 500;
 }
 
 message Clients {
@@ -95,6 +107,8 @@ message Invoice {
     Project project = 30;
     Account account = 31;
     repeated Entry items = 50;
+    Price total = 100;
+    Price marketValue = 101;
 }
 
 message Template {

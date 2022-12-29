@@ -28,10 +28,15 @@ func (r *repository) readFile(pth string) ([]byte, error) {
 }
 
 func (r *repository) readConfig() error {
-	buf, err := r.readFile(defaultRepo.PathConfig)
+	buf, err := r.readFile(defaultRepo.PathConfigYaml)
 	if err != nil {
 		return err
 	}
+	buf, err = yaml2json(buf)
+	if err != nil {
+		return err
+	}
+
 	r.configModified = false
 	return protojson.UnmarshalOptions{
 		DiscardUnknown: true,
@@ -40,7 +45,11 @@ func (r *repository) readConfig() error {
 }
 
 func (r *repository) readAccounts() error {
-	buf, err := r.readFile(defaultRepo.PathAccounts)
+	buf, err := r.readFile(defaultRepo.PathAccountsYaml)
+	if err != nil {
+		return err
+	}
+	buf, err = yaml2json(buf)
 	if err != nil {
 		return err
 	}
@@ -52,7 +61,11 @@ func (r *repository) readAccounts() error {
 }
 
 func (r *repository) readClients() error {
-	buf, err := r.readFile(defaultRepo.PathClients)
+	buf, err := r.readFile(defaultRepo.PathClientsYaml)
+	if err != nil {
+		return err
+	}
+	buf, err = yaml2json(buf)
 	if err != nil {
 		return err
 	}
@@ -107,10 +120,14 @@ func (r *repository) readProjects() error {
 			if d.IsDir() {
 				return nil
 			}
-			if !strings.HasSuffix(pth, ".json") {
+			if !strings.HasSuffix(pth, ".yaml") {
 				return nil
 			}
 			buf, err := r.readFile(pth)
+			if err != nil {
+				return err
+			}
+			buf, err = yaml2json(buf)
 			if err != nil {
 				return err
 			}
@@ -198,7 +215,7 @@ func (r *repository) readInvoices() error {
 			if d.IsDir() {
 				return nil
 			}
-			if !strings.HasSuffix(pth, ".json") {
+			if !strings.HasSuffix(pth, ".yaml") {
 				return nil
 			}
 			b, id := path.Dir(pth), path.Base(pth)
@@ -207,6 +224,10 @@ func (r *repository) readInvoices() error {
 			}
 
 			buf, err := r.readFile(pth)
+			if err != nil {
+				return err
+			}
+			buf, err = yaml2json(buf)
 			if err != nil {
 				return err
 			}

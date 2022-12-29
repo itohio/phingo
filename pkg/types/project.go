@@ -68,7 +68,3 @@ func (pl *Project_LogEntry) Price(p *Project) *Price {
 	}
 	return nil
 }
-
-func (p *Price) Pretty() string {
-	return fmt.Sprintf("%f %s", p.Amount, p.Denom)
-}

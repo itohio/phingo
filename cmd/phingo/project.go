@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/itohio/phingo/pkg/bi"
 	"github.com/itohio/phingo/pkg/engine"
 	"github.com/itohio/phingo/pkg/types"
 	"github.com/itohio/phingo/pkg/version"
@@ -65,7 +66,7 @@ func newProjectSetRateCmd() *cobra.Command {
 		Long:    ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 3 {
-				return errors.New("Must supply project id/name, amount and denomination as arguments")
+				return errors.New("must supply project id/name, amount and denomination as arguments")
 			}
 			projects := globalRepository.Projects(args[0])
 			if len(projects) != 1 {
@@ -127,14 +128,14 @@ func newProjectSetDatesCmd() *cobra.Command {
 				return errors.New("please provide a valid project id/name that results in a unique entry")
 			}
 
-			if d, err := sanitizeDateTime(*start); err == nil {
+			if d, err := bi.SanitizeDateTime(*start); err == nil {
 				projects[0].StartDate = d
 			}
-			if d, err := sanitizeDateTime(*end); err == nil {
+			if d, err := bi.SanitizeDateTime(*end); err == nil {
 				projects[0].EndDate = d
 			}
 			if *duration > time.Hour {
-				projects[0].EndDate = time.Now().Add(*duration).Format(saneDateTimeLayout)
+				projects[0].EndDate = bi.Format(time.Now().Add(*duration))
 			}
 
 			return globalRepository.SetProject(projects[0])
@@ -215,23 +216,6 @@ func newProjectDeleteCmd() *cobra.Command {
 	return cmd
 }
 
-const saneDateTimeLayout = "2006-01-02 15:04"
-
-func sanitizeDateTime(val string) (string, error) {
-	for _, fmt := range []string{
-		saneDateTimeLayout,
-		time.ANSIC,
-		time.Kitchen,
-		time.RFC1123,
-		time.RubyDate,
-	} {
-		if t, err := time.Parse(fmt, val); err == nil {
-			return t.Format(saneDateTimeLayout), nil
-		}
-	}
-	return "", errors.New("invalid time format")
-}
-
 func newProjectLogCmd() *cobra.Command {
 	var (
 		completed *bool
@@ -253,7 +237,7 @@ func newProjectLogCmd() *cobra.Command {
 			if len(description) < 7 {
 				return errors.New("the description must be longer than 7 letters")
 			}
-			startedSanitized, err := sanitizeDateTime(*started)
+			startedSanitized, err := bi.SanitizeDateTime(*started)
 			if err != nil {
 				return err
 			}
@@ -280,7 +264,7 @@ func newProjectLogCmd() *cobra.Command {
 	completed = cmd.Flags().BoolP("completed", "c", false, "Mark the project as completed")
 	progress = cmd.Flags().Float32P("progress", "p", 0, "Record the relative progress (0 = unchanged) - cumulative should add up to 100% at most")
 	duration = cmd.Flags().DurationP("time-spent", "t", 0, "Time spent doing the task")
-	started = cmd.Flags().StringP("started", "s", time.Now().Format(saneDateTimeLayout), "Date and time when the task started")
+	started = cmd.Flags().StringP("started", "s", bi.Now(), "Date and time when the task started")
 
 	cmd.MarkFlagRequired("progress")
 	cmd.MarkFlagRequired("time-spent")

@@ -22,6 +22,7 @@ func newAccountCmd() *cobra.Command {
 
 	cmd.AddCommand(
 		newAccountSetCmd(),
+		newAccountContactsCmd(),
 		newAccountDelCmd(),
 		newAccountShowCmd(),
 	)
@@ -31,9 +32,10 @@ func newAccountCmd() *cobra.Command {
 
 func newAccountSetCmd() *cobra.Command {
 	var (
-		name    *string
-		denom   *string
-		contact *[]string
+		name     *string
+		denom    *string
+		decimals *int32
+		contact  *[]string
 	)
 
 	cmd := &cobra.Command{
@@ -42,10 +44,14 @@ func newAccountSetCmd() *cobra.Command {
 		Short:   "set/add accounts",
 		Long:    ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if *decimals <= 0 || *decimals > 10 {
+				return errors.New("decimals must be in the range (0, 10]")
+			}
 			acc := &types.Account{
-				Name:    *name,
-				Denom:   *denom,
-				Contact: make(map[string]string, len(*contact)),
+				Name:     *name,
+				Denom:    *denom,
+				Decimals: *decimals,
+				Contact:  make(map[string]string, len(*contact)),
 			}
 			for _, c := range *contact {
 				kv := strings.SplitN(c, "=", 2)
@@ -55,13 +61,12 @@ func newAccountSetCmd() *cobra.Command {
 				}
 				acc.Contact[kv[0]] = kv[1]
 			}
-			globalRepository.Read()
 			err := globalRepository.SetAccount(acc)
 			if err != nil {
 				return err
 			}
 			log.Println("Account Id: ", acc.Id)
-			return globalRepository.Write()
+			return nil
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return globalRepository.Read()
@@ -73,9 +78,68 @@ func newAccountSetCmd() *cobra.Command {
 
 	name = cmd.Flags().StringP("name", "n", "", "Unique account name")
 	denom = cmd.Flags().StringP("denom", "d", "Eur", "account primary denomination")
+	decimals = cmd.Flags().Int32P("decimals", "m", 2, "Number of digits after zero")
 	contact = cmd.Flags().StringArrayP("contact", "c", nil, "Key-value pair for contact information, e.g. \"Name=My name\"")
 	cmd.MarkFlagRequired("name")
 	cmd.MarkFlagRequired("denom")
+
+	return cmd
+}
+
+func newAccountContactsCmd() *cobra.Command {
+	var (
+		contact *[]string
+	)
+
+	cmd := &cobra.Command{
+		Use:     "contact",
+		Version: version.Version,
+		Short:   "set/add/delete contacts",
+		Long:    `will delete contact key if value is empty`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) < 1 {
+				return errors.New("at least one account id/name and one contact must be provided")
+			}
+			accounts := globalRepository.Accounts(args...)
+
+			contacts := make(map[string]string, len(*contact))
+			for _, c := range *contact {
+				kv := strings.SplitN(c, "=", 2)
+				log.Println("kv", kv)
+				if len(kv) == 2 {
+					contacts[kv[0]] = kv[1]
+				} else {
+					contacts[kv[0]] = ""
+				}
+			}
+
+			for _, acc := range accounts {
+				if acc.Contact == nil {
+					acc.Contact = make(map[string]string)
+				}
+				for k, v := range contacts {
+					if v == "" {
+						delete(acc.Contact, k)
+					} else {
+						acc.Contact[k] = v
+					}
+				}
+
+				err := globalRepository.SetAccount(acc)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		},
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return globalRepository.Read()
+		},
+		PostRunE: func(cmd *cobra.Command, args []string) error {
+			return globalRepository.Write()
+		},
+	}
+	contact = cmd.Flags().StringArrayP("contact", "c", nil, "Key-value pair for contact information, e.g. \"Name=My name\"")
 
 	return cmd
 }
