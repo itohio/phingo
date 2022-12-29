@@ -2,10 +2,9 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/itohio/phingo/pkg/bi"
@@ -18,6 +17,7 @@ import (
 func newProjectCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "project",
+		Aliases: []string{"prj", "pr", "p"},
 		Version: version.Version,
 		Short:   "manage projects",
 		Long:    ``,
@@ -27,6 +27,7 @@ func newProjectCmd() *cobra.Command {
 		newProjectLogCmd(),
 		newProjectSetCmd(),
 		newProjectSetRateCmd(),
+		newProjectSetClientCmd(),
 		newProjectSetDatesCmd(),
 		newProjectShowCmd(),
 		newProjectDeleteCmd(),
@@ -36,13 +37,106 @@ func newProjectCmd() *cobra.Command {
 }
 
 func newProjectSetCmd() *cobra.Command {
+	var (
+		hourly      *bool
+		amount      *float32
+		denom       *string
+		account     *string
+		client      *string
+		name        *string
+		description *string
+		start       *string
+		end         *string
+		duration    *time.Duration
+	)
 	cmd := &cobra.Command{
 		Use:     "add",
-		Aliases: []string{"set", "a", "s"},
+		Aliases: []string{"new", "set", "a"},
 		Version: version.Version,
 		Short:   "set/add a project",
 		Long:    ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			accs := globalRepository.Accounts(*account)
+			if len(accs) != 1 {
+				return errors.New("please provide a valid account ID")
+			}
+			cls := globalRepository.Clients(*client)
+			if len(cls) != 1 {
+				return errors.New("please provide a valid client ID")
+			}
+
+			p := &types.Project{
+				Name:        *name,
+				Description: *description,
+				Client:      cls[0],
+				Account:     accs[0],
+			}
+			p.SetRate(*amount, *denom, *hourly)
+			if d, err := bi.SanitizeDateTime(*start); err == nil {
+				p.StartDate = d
+			}
+			if d, err := bi.SanitizeDateTime(*end); err == nil {
+				p.EndDate = d
+			}
+			if *duration > time.Hour {
+				p.EndDate = bi.Format(time.Now().Add(*duration))
+			}
+			err := globalRepository.SetProject(p)
+			if err != nil {
+				return err
+			}
+			log.Println("Project Id: ", p.Id)
+			return nil
+		},
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return globalRepository.Read()
+		},
+		PostRunE: func(cmd *cobra.Command, args []string) error {
+			return globalRepository.Write()
+		},
+	}
+	hourly = cmd.Flags().BoolP("hourly", "", false, "Set hourly rate (default is total per project)")
+	amount = cmd.Flags().Float32P("amount", "", 0, "Provide the amount")
+	account = cmd.Flags().StringP("account", "", "", "Account ID")
+	client = cmd.Flags().StringP("client", "", "", "Client ID")
+	denom = cmd.Flags().StringP("denom", "", "Eur", "main project denomination")
+	name = cmd.Flags().StringP("name", "", "", "project short name")
+	description = cmd.Flags().StringP("description", "", "Eur", "project description")
+	start = cmd.Flags().StringP("start", "", "", "Set project start date")
+	end = cmd.Flags().StringP("end", "", "", "Set project end date")
+	duration = cmd.Flags().DurationP("duration", "d", 0, "Set project end date <duration> from now in the future")
+
+	cmd.MarkFlagRequired("account")
+	cmd.MarkFlagRequired("client")
+	cmd.MarkFlagRequired("name")
+	cmd.MarkFlagRequired("description")
+	cmd.MarkFlagRequired("start")
+
+	return cmd
+}
+
+func newProjectSetRateCmd() *cobra.Command {
+	var (
+		hourly *bool
+		amount *float32
+		denom  *string
+	)
+	cmd := &cobra.Command{
+		Use:     "set-rate",
+		Aliases: []string{"sr"},
+		Version: version.Version,
+		Short:   "set a rate for the project",
+		Long:    ``,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			projects := globalRepository.Projects(args...)
+			for _, p := range projects {
+				p.SetRate(*amount, *denom, *hourly)
+				err := globalRepository.SetProject(p)
+				if err != nil {
+					return err
+				}
+			}
+			log.Println("Modified ", len(projects), " projects")
 			return nil
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -53,46 +147,63 @@ func newProjectSetCmd() *cobra.Command {
 		},
 	}
 
+	hourly = cmd.Flags().BoolP("hourly", "", false, "Set hourly rate (default is total per project)")
+	amount = cmd.Flags().Float32P("amount", "a", 0, "Provide the amount")
+	denom = cmd.Flags().StringP("denom", "d", "Eur", "Provide denomination")
+	cmd.MarkFlagRequired("amount")
+
 	return cmd
 }
 
-func newProjectSetRateCmd() *cobra.Command {
-	var hourly *bool
+func newProjectSetClientCmd() *cobra.Command {
+	var (
+		account *string
+		client  *string
+	)
 	cmd := &cobra.Command{
-		Use:     "set-rate",
-		Aliases: []string{"sr"},
+		Use:     "set-client",
+		Aliases: []string{"set-account", "sc", "sa"},
 		Version: version.Version,
-		Short:   "set a rate for the project",
+		Short:   "set a client/account for the project",
 		Long:    ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 3 {
-				return errors.New("must supply project id/name, amount and denomination as arguments")
+			if *account == "" && *client == "" {
+				return errors.New("either Account ID or Client ID must be provided")
 			}
-			projects := globalRepository.Projects(args[0])
-			if len(projects) != 1 {
-				return errors.New("please provide a valid project id/name that results in a unique entry")
-			}
-			amount, err := strconv.ParseFloat(args[1], 32)
-			if err != nil {
-				return err
-			}
-			if *hourly {
-				projects[0].Rate = &types.Project_Hourly{
-					Hourly: &types.Price{
-						Amount: float32(amount),
-						Denom:  args[2],
-					},
+			var (
+				acc *types.Account
+				cl  *types.Client
+			)
+			if *account != "" {
+				accs := globalRepository.Accounts(*account)
+				if len(accs) != 1 {
+					return errors.New("please provide a valid Account ID")
 				}
-			} else {
-				projects[0].Rate = &types.Project_Total{
-					Total: &types.Price{
-						Amount: float32(amount),
-						Denom:  args[2],
-					},
+				acc = accs[0]
+			}
+			if *client != "" {
+				cls := globalRepository.Clients(*client)
+				if len(cls) != 1 {
+					return errors.New("please provide a valid Client ID")
 				}
+				cl = cls[0]
 			}
 
-			return globalRepository.SetProject(projects[0])
+			projects := globalRepository.Projects(args...)
+			for _, p := range projects {
+				if acc != nil {
+					p.Account = acc
+				}
+				if cl != nil {
+					p.Client = cl
+				}
+				err := globalRepository.SetProject(p)
+				if err != nil {
+					return err
+				}
+			}
+			log.Println("Modified ", len(projects), " projects")
+			return nil
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return globalRepository.Read()
@@ -102,7 +213,8 @@ func newProjectSetRateCmd() *cobra.Command {
 		},
 	}
 
-	hourly = cmd.Flags().BoolP("hourly", "", false, "Set hourly rate (default is total per project)")
+	client = cmd.Flags().StringP("client", "c", "", "Provide Client ID")
+	account = cmd.Flags().StringP("account", "a", "", "Provide Account ID")
 
 	return cmd
 }
@@ -120,25 +232,25 @@ func newProjectSetDatesCmd() *cobra.Command {
 		Short:   "set a start/end dates for the project",
 		Long:    ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 1 {
-				return errors.New("must supply project id/name")
-			}
-			projects := globalRepository.Projects(args[0])
-			if len(projects) != 1 {
-				return errors.New("please provide a valid project id/name that results in a unique entry")
-			}
+			projects := globalRepository.Projects(args...)
 
-			if d, err := bi.SanitizeDateTime(*start); err == nil {
-				projects[0].StartDate = d
+			for _, p := range projects {
+				if d, err := bi.SanitizeDateTime(*start); err == nil {
+					p.StartDate = d
+				}
+				if d, err := bi.SanitizeDateTime(*end); err == nil {
+					p.EndDate = d
+				}
+				if *duration > time.Hour {
+					p.EndDate = bi.Format(time.Now().Add(*duration))
+				}
+				err := globalRepository.SetProject(p)
+				if err != nil {
+					return err
+				}
 			}
-			if d, err := bi.SanitizeDateTime(*end); err == nil {
-				projects[0].EndDate = d
-			}
-			if *duration > time.Hour {
-				projects[0].EndDate = bi.Format(time.Now().Add(*duration))
-			}
-
-			return globalRepository.SetProject(projects[0])
+			log.Println("Modified ", len(projects), " projects")
+			return nil
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return globalRepository.Read()
@@ -156,12 +268,33 @@ func newProjectSetDatesCmd() *cobra.Command {
 }
 
 func newProjectShowCmd() *cobra.Command {
+	var (
+		all   *bool
+		short *bool
+	)
 	cmd := &cobra.Command{
 		Use:     "show",
+		Aliases: []string{"list", "s", "ls"},
 		Version: version.Version,
 		Short:   "show projects",
 		Long:    ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			projects := globalRepository.Projects(args...)
+			if !*all {
+				for i, p := range projects {
+					if p.Completed {
+						projects[i] = projects[len(projects)-1]
+						projects = projects[:len(projects)-1]
+					}
+				}
+			}
+			if *short {
+				for _, val := range projects {
+					fmt.Printf("'%s': %s", val.Name, val.Id)
+					fmt.Println()
+				}
+				return nil
+			}
 			cfg := globalRepository.Config()
 			export, err := engine.New("console", cfg)
 			if err != nil {
@@ -171,7 +304,6 @@ func newProjectShowCmd() *cobra.Command {
 			if len(tpl) == 0 {
 				return errors.New("please create a projects.md template")
 			}
-			projects := globalRepository.Projects(args...)
 
 			return export.ExportProjects(os.Stdout, tpl[0], projects)
 		},
@@ -179,6 +311,8 @@ func newProjectShowCmd() *cobra.Command {
 			return globalRepository.Read()
 		},
 	}
+	all = cmd.Flags().BoolP("all", "a", false, "Show also completed projects")
+	short = cmd.Flags().BoolP("short", "s", false, "show only names and IDs")
 
 	return cmd
 }
@@ -218,10 +352,11 @@ func newProjectDeleteCmd() *cobra.Command {
 
 func newProjectLogCmd() *cobra.Command {
 	var (
-		completed *bool
-		progress  *float32
-		duration  *time.Duration
-		started   *string
+		completed   *bool
+		progress    *float32
+		duration    *time.Duration
+		started     *string
+		description *string
 	)
 	cmd := &cobra.Command{
 		Use:       "log",
@@ -230,29 +365,26 @@ func newProjectLogCmd() *cobra.Command {
 		Short:     "log project progress",
 		Long:      ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) < 2 {
-				return errors.New("project ID/name and a description must be provided")
-			}
-			description := strings.Join(args[1:], " ")
-			if len(description) < 7 {
-				return errors.New("the description must be longer than 7 letters")
-			}
 			startedSanitized, err := bi.SanitizeDateTime(*started)
 			if err != nil {
 				return err
 			}
 			projects := globalRepository.Projects(args[0])
-			if len(projects) != 1 {
-				return errors.New("please provide a valid project id/name that results in a unique entry")
+			for _, p := range projects {
+				p.Log = append(p.Log, &types.Project_LogEntry{
+					Start:       startedSanitized,
+					Description: *description,
+					Duration:    int64(*duration),
+					Progress:    *progress,
+				})
+				p.Completed = *completed
+				err := globalRepository.SetProject(p)
+				if err != nil {
+					return err
+				}
 			}
-			projects[0].Log = append(projects[0].Log, &types.Project_LogEntry{
-				Start:       startedSanitized,
-				Description: description,
-				Duration:    int64(*duration),
-				Progress:    *progress,
-			})
-			projects[0].Completed = *completed
-			return globalRepository.SetProject(projects[0])
+			log.Println("Modified ", len(projects), " projects")
+			return nil
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			return globalRepository.Read()
@@ -265,8 +397,10 @@ func newProjectLogCmd() *cobra.Command {
 	progress = cmd.Flags().Float32P("progress", "p", 0, "Record the relative progress (0 = unchanged) - cumulative should add up to 100% at most")
 	duration = cmd.Flags().DurationP("time-spent", "t", 0, "Time spent doing the task")
 	started = cmd.Flags().StringP("started", "s", bi.Now(), "Date and time when the task started")
+	description = cmd.Flags().StringP("description", "d", "", "Description")
 
 	cmd.MarkFlagRequired("progress")
+	cmd.MarkFlagRequired("description")
 	cmd.MarkFlagRequired("time-spent")
 
 	return cmd

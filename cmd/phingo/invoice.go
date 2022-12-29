@@ -11,9 +11,10 @@ import (
 
 func newInvoiceCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "client",
+		Use:     "invoice",
+		Aliases: []string{"inv", "i"},
 		Version: version.Version,
-		Short:   "manage clients",
+		Short:   "manage invoices",
 		Long:    ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return nil
@@ -21,25 +22,10 @@ func newInvoiceCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		newInvoiceAddCmd(),
-		newInvoiceDelCmd(),
 		newInvoiceSetCmd(),
+		newInvoiceDelCmd(),
 		newInvoiceShowCmd(),
 	)
-
-	return cmd
-}
-
-func newInvoiceAddCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:     "add",
-		Version: version.Version,
-		Short:   "add accounts",
-		Long:    ``,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return nil
-		},
-	}
 
 	return cmd
 }
@@ -48,7 +34,7 @@ func newInvoiceDelCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "del",
 		Version: version.Version,
-		Short:   "delete accounts",
+		Short:   "delete invoices",
 		Long:    ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return nil
@@ -61,8 +47,9 @@ func newInvoiceDelCmd() *cobra.Command {
 func newInvoiceSetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "set",
+		Aliases: []string{"add", "new", "a"},
 		Version: version.Version,
-		Short:   "configure accounts",
+		Short:   "add/set invoice",
 		Long:    ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return nil
@@ -75,6 +62,7 @@ func newInvoiceSetCmd() *cobra.Command {
 func newInvoiceShowCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "show",
+		Aliases: []string{"list", "ls"},
 		Version: version.Version,
 		Short:   "show all invoices",
 		Long:    ``,

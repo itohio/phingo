@@ -5,7 +5,7 @@ Denomination: {{.Denom}}
 Decimal places: {{.Decimals}}
 
 Contacts:
-{{range $what, $value := .Contact}}- **{{$what}}:** {{$value}}
+{{range Contacts .Contact}}- {{.}}
 {{end}}
 
 {{end}}

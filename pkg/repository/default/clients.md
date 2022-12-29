@@ -1,13 +1,15 @@
 {{range .Clients}}
 # Client {{.Name}}
 ID: {{.Id}}
-Account ID: {{.Account.Id}}
-Account Name: {{.Account.Name}}
-Account Denom: {{.Account.Denom}}
+Name: {{.Name}}
+Description: {{.Description}}
+{{if .Notes}}
+Notes:
+{{range Notes .Notes}}- {{.}}
+{{end}}{{end}}
 
 Contacts:
-{{range $what, $value := .Contact}}
-- **{{$what}}:** {{$value}}
+{{range Contacts .Contact}}- {{.}}
 {{end}}
 
 {{end}}

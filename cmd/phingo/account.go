@@ -2,9 +2,9 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/itohio/phingo/pkg/engine"
 	"github.com/itohio/phingo/pkg/types"
@@ -15,6 +15,7 @@ import (
 func newAccountCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "account",
+		Aliases: []string{"acc", "a"},
 		Version: version.Version,
 		Short:   "manage accounts",
 		Long:    ``,
@@ -40,6 +41,7 @@ func newAccountSetCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "set",
+		Aliases: []string{"new", "set", "a"},
 		Version: version.Version,
 		Short:   "set/add accounts",
 		Long:    ``,
@@ -53,14 +55,7 @@ func newAccountSetCmd() *cobra.Command {
 				Decimals: *decimals,
 				Contact:  make(map[string]string, len(*contact)),
 			}
-			for _, c := range *contact {
-				kv := strings.SplitN(c, "=", 2)
-				log.Println("kv", kv)
-				if len(kv) != 2 {
-					return errors.New("contact info must be key=value")
-				}
-				acc.Contact[kv[0]] = kv[1]
-			}
+			parseKeyValue(acc.Contact, *contact)
 			err := globalRepository.SetAccount(acc)
 			if err != nil {
 				return err
@@ -97,39 +92,20 @@ func newAccountContactsCmd() *cobra.Command {
 		Short:   "set/add/delete contacts",
 		Long:    `will delete contact key if value is empty`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) < 1 {
-				return errors.New("at least one account id/name and one contact must be provided")
-			}
 			accounts := globalRepository.Accounts(args...)
-
-			contacts := make(map[string]string, len(*contact))
-			for _, c := range *contact {
-				kv := strings.SplitN(c, "=", 2)
-				log.Println("kv", kv)
-				if len(kv) == 2 {
-					contacts[kv[0]] = kv[1]
-				} else {
-					contacts[kv[0]] = ""
-				}
-			}
 
 			for _, acc := range accounts {
 				if acc.Contact == nil {
 					acc.Contact = make(map[string]string)
 				}
-				for k, v := range contacts {
-					if v == "" {
-						delete(acc.Contact, k)
-					} else {
-						acc.Contact[k] = v
-					}
-				}
+				parseKeyValue(acc.Contact, *contact)
 
 				err := globalRepository.SetAccount(acc)
 				if err != nil {
 					return err
 				}
 			}
+			log.Println("Modified ", len(accounts), " accounts")
 			return nil
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -178,15 +154,21 @@ func newAccountDelCmd() *cobra.Command {
 }
 
 func newAccountShowCmd() *cobra.Command {
+	var short *bool
 	cmd := &cobra.Command{
 		Use:     "show",
+		Aliases: []string{"list", "s", "ls"},
 		Version: version.Version,
 		Short:   "show all accounts",
 		Long:    ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := globalRepository.Read()
-			if err != nil {
-				return err
+			accounts := globalRepository.Accounts(args...)
+			if *short {
+				for _, val := range accounts {
+					fmt.Printf("'%s': %s", val.Name, val.Id)
+					fmt.Println()
+				}
+				return nil
 			}
 			cfg := globalRepository.Config()
 			export, err := engine.New("console", cfg)
@@ -197,7 +179,6 @@ func newAccountShowCmd() *cobra.Command {
 			if len(tpl) == 0 {
 				return errors.New("please create a accounts.md template")
 			}
-			accounts := globalRepository.Accounts(args...)
 
 			return export.ExportAccounts(os.Stdout, tpl[0], accounts)
 		},
@@ -205,6 +186,7 @@ func newAccountShowCmd() *cobra.Command {
 			return globalRepository.Read()
 		},
 	}
+	short = cmd.Flags().BoolP("short", "s", false, "show only names and IDs")
 
 	return cmd
 }

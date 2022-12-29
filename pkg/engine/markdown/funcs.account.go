@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"text/template"
 
 	"github.com/itohio/phingo/pkg/types"
 )
@@ -57,13 +58,9 @@ func makeAccountFunc(config *types.Config) func(*types.Account) []string {
 	}
 }
 
-func makeClientFunc(config *types.Config) func(*types.Client) []string {
-	return func(val *types.Client) []string {
-		s := []string{
-			fmt.Sprintf("**%s**", config.Locale.Translate("CLIENT")),
-		}
-		s = append(s, makeContactsFunc(config)(val.Contact)...)
-
-		return s
+func makeAccountFuncs(context *types.AccountTemplateContext) template.FuncMap {
+	return template.FuncMap{
+		"Contacts": makeContactsFunc(context.Config),
+		"Account":  makeAccountFunc(context.Config),
 	}
 }

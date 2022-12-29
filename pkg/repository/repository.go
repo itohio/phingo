@@ -52,7 +52,7 @@ func New(url string) (rep Repository, err error) {
 	default:
 		return nil, errors.New("repository not found")
 	}
-	if err != nil {
+	if err == nil {
 		err = rep.Read()
 	}
 

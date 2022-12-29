@@ -1,8 +1,8 @@
 package repository
 
 import (
+	"io/fs"
 	"log"
-	"os"
 	"path"
 
 	"github.com/golang/protobuf/proto"
@@ -14,11 +14,11 @@ import (
 func (r *repository) writeFile(pth string, buf []byte) error {
 	// FIXME: Make it more secure
 	pth = path.Join(r.url, pth)
-	err := os.MkdirAll(path.Dir(pth), os.ModeDir)
+	err := r.fs.MkDirAll(path.Dir(pth), fs.ModeDir)
 	if err != nil {
 		return err
 	}
-	f, err := os.Create(pth)
+	f, err := r.fs.Create(pth)
 	if err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func (r *repository) writeFile(pth string, buf []byte) error {
 func (r *repository) removeFile(pth string) error {
 	// FIXME: make it more secure
 	pth = path.Join(r.url, pth)
-	return os.Rename(pth, pth+".rm")
+	return r.fs.Rename(pth, pth+".rm")
 }
 
 func (r *repository) writeConfig() error {
@@ -61,9 +61,9 @@ func (r *repository) writeConfig() error {
 }
 
 func (r *repository) writeAccounts() error {
-	// if !r.accountsModified {
-	// 	return nil
-	// }
+	if !r.accountsModified {
+		return nil
+	}
 	buf, err := protojson.Marshal(r.accounts)
 	if err != nil {
 		return err
@@ -83,9 +83,9 @@ func (r *repository) writeAccounts() error {
 }
 
 func (r *repository) writeClients() error {
-	// if !r.clientsModified {
-	// 	return nil
-	// }
+	if !r.clientsModified {
+		return nil
+	}
 	buf, err := protojson.Marshal(r.clients)
 	if err != nil {
 		return err
@@ -142,10 +142,10 @@ func (r *repository) writeProjects() error {
 			continue
 		}
 
-		// _, ok := r.projectsModified[val.Id]
-		// if !ok {
-		// 	continue
-		// }
+		_, ok := r.projectsModified[val.Id]
+		if !ok {
+			continue
+		}
 
 		if val.FileName == "" {
 			val.FileName = val.Id + ".yaml"
@@ -192,10 +192,10 @@ func (r *repository) writeInvoices() error {
 			continue
 		}
 
-		// _, ok := r.invoicesModified[val.Id]
-		// if !ok {
-		// 	continue
-		// }
+		_, ok := r.invoicesModified[val.Id]
+		if !ok {
+			continue
+		}
 
 		if val.FileName == "" {
 			val.FileName = val.Id + ".yaml"
@@ -214,12 +214,10 @@ func (r *repository) writeInvoices() error {
 			return err
 		}
 
-		// if strings.HasSuffix(inv.FileName, ".yaml") {
 		buf, err = json2yaml(buf)
 		if err != nil {
 			return err
 		}
-		// }
 
 		err = r.writeFile(path.Join(defaultRepo.PathInvoices, inv.Year, path.Base(inv.FileName)), buf)
 		if err != nil {

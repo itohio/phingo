@@ -19,29 +19,6 @@ func newExportCmd() *cobra.Command {
 		Version: version.Version,
 		Short:   "Export phinancial records",
 		Long:    ``,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			f, err := os.Open("templates/default.md")
-			if err != nil {
-				return err
-			}
-			defer f.Close()
-			w, err := os.Create("output.pdf")
-			if err != nil {
-				return err
-			}
-			defer w.Close()
-
-			cfg := globalRepository.Config()
-
-			md, err := engine.New("pdf", cfg)
-			if err != nil {
-				return err
-			}
-
-			_ = md
-
-			return nil
-		},
 	}
 
 	cmd.AddCommand(
@@ -109,9 +86,10 @@ func newExportInvoiceCmd() *cobra.Command {
 		output   *string
 		account  *string
 		cmd      = &cobra.Command{
-			Use:     "export",
+			Use:     "invoice",
+			Aliases: []string{"inv", "i"},
 			Version: version.Version,
-			Short:   "Export phinancial records",
+			Short:   "Export invoice records",
 			Long:    ``,
 			PreRunE: func(cmd *cobra.Command, args []string) error {
 				return globalRepository.Read()

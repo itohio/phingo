@@ -15,6 +15,9 @@ func removeId[T IdGetter](arr []T, id string) ([]T, T, error) {
 	N := len(arr)
 	for i, val := range arr {
 		if val.GetId() == id {
+			if i == N-1 {
+				return arr[:N-1], arr[N-1], nil
+			}
 			tmp, arr[i] = arr[i], arr[N-1]
 			return arr[:N-1], tmp, nil
 		}

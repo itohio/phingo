@@ -2,9 +2,9 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/itohio/phingo/pkg/engine"
 	"github.com/itohio/phingo/pkg/types"
@@ -15,15 +15,17 @@ import (
 func newClientCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:     "client",
+		Aliases: []string{"cl", "c"},
 		Version: version.Version,
 		Short:   "manage clients",
 		Long:    ``,
 	}
 
 	cmd.AddCommand(
-		newClientDelCmd(),
 		newClientSetCmd(),
 		newClientContactCmd(),
+		newClientNoteCmd(),
+		newClientDelCmd(),
 		newClientShowCmd(),
 	)
 
@@ -73,6 +75,7 @@ func newClientSetCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "set",
+		Aliases: []string{"new", "set", "a"},
 		Version: version.Version,
 		Short:   "set/add clients",
 		Long:    ``,
@@ -83,13 +86,7 @@ func newClientSetCmd() *cobra.Command {
 				Notes:       *notes,
 				Contact:     make(map[string]string, len(*contact)),
 			}
-			for _, c := range *contact {
-				kv := strings.SplitN(c, "=", 1)
-				if len(kv) != 2 {
-					return errors.New("contact info must be key=value")
-				}
-				cl.Contact[kv[0]] = kv[1]
-			}
+			parseKeyValue(cl.Contact, *contact)
 			err := globalRepository.SetClient(cl)
 			if err != nil {
 				return err
@@ -126,39 +123,19 @@ func newClientContactCmd() *cobra.Command {
 		Short:   "set/add/delete contacts",
 		Long:    `will delete contact key if value is empty`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) < 1 {
-				return errors.New("at least one account id/name and one contact must be provided")
-			}
 			clients := globalRepository.Clients(args...)
-
-			contacts := make(map[string]string, len(*contact))
-			for _, c := range *contact {
-				kv := strings.SplitN(c, "=", 2)
-				log.Println("kv", kv)
-				if len(kv) == 2 {
-					contacts[kv[0]] = kv[1]
-				} else {
-					contacts[kv[0]] = ""
-				}
-			}
 
 			for _, cl := range clients {
 				if cl.Contact == nil {
 					cl.Contact = make(map[string]string)
 				}
-				for k, v := range contacts {
-					if v == "" {
-						delete(cl.Contact, k)
-					} else {
-						cl.Contact[k] = v
-					}
-				}
-
+				parseKeyValue(cl.Contact, *contact)
 				err := globalRepository.SetClient(cl)
 				if err != nil {
 					return err
 				}
 			}
+			log.Println("Modified ", len(clients), " clients")
 			return nil
 		},
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -173,13 +150,59 @@ func newClientContactCmd() *cobra.Command {
 	return cmd
 }
 
+func newClientNoteCmd() *cobra.Command {
+	var (
+		note *[]string
+	)
+
+	cmd := &cobra.Command{
+		Use:     "note",
+		Version: version.Version,
+		Short:   "add notes",
+		Long:    `will add notes to the client`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clients := globalRepository.Clients(args...)
+
+			for _, cl := range clients {
+				cl.Notes = append(cl.Notes, *note...)
+				err := globalRepository.SetClient(cl)
+				if err != nil {
+					return err
+				}
+			}
+			log.Println("Modified ", len(clients), " clients")
+			return nil
+		},
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return globalRepository.Read()
+		},
+		PostRunE: func(cmd *cobra.Command, args []string) error {
+			return globalRepository.Write()
+		},
+	}
+	note = cmd.Flags().StringArrayP("note", "t", nil, "A note to add to the client notes")
+
+	return cmd
+}
+
 func newClientShowCmd() *cobra.Command {
+	var short *bool
 	cmd := &cobra.Command{
 		Use:     "show",
+		Aliases: []string{"list", "s", "ls"},
 		Version: version.Version,
 		Short:   "show all clients",
 		Long:    ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			clients := globalRepository.Clients(args...)
+			if *short {
+				for _, val := range clients {
+					fmt.Printf("'%s': %s", val.Name, val.Id)
+					fmt.Println()
+				}
+				return nil
+			}
+
 			cfg := globalRepository.Config()
 			export, err := engine.New("console", cfg)
 			if err != nil {
@@ -189,7 +212,6 @@ func newClientShowCmd() *cobra.Command {
 			if len(tpl) == 0 {
 				return errors.New("please create a clients.md template")
 			}
-			clients := globalRepository.Clients(args...)
 
 			return export.ExportClients(os.Stdout, tpl[0], clients)
 		},
@@ -197,6 +219,7 @@ func newClientShowCmd() *cobra.Command {
 			return globalRepository.Read()
 		},
 	}
+	short = cmd.Flags().BoolP("short", "s", false, "show only names and IDs")
 
 	return cmd
 }

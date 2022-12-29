@@ -27,7 +27,9 @@ func (e *Engine) ExportAccounts(writer io.Writer, tpl *types.Template, accounts 
 		Template: tpl,
 		Accounts: accounts,
 	}
-	t, err := template.New(tpl.What).Parse(string(tpl.Text))
+	t := template.New(tpl.What)
+	t.Funcs(makeAccountFuncs(context))
+	t, err := t.Parse(string(tpl.Text))
 	if err != nil {
 		return err
 	}
@@ -41,7 +43,9 @@ func (e *Engine) ExportClients(writer io.Writer, tpl *types.Template, clients []
 		Template: tpl,
 		Clients:  clients,
 	}
-	t, err := template.New(tpl.What).Parse(string(tpl.Text))
+	t := template.New(tpl.What)
+	t.Funcs(makeClientFuncs(context))
+	t, err := t.Parse(string(tpl.Text))
 	if err != nil {
 		return err
 	}

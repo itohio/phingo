@@ -34,13 +34,16 @@ type OSWrapper struct {
 
 var _ RWFS = &OSWrapper{}
 
+// var _ fs.ReadDirFS = &OSWrapper{}
+var _ fs.StatFS = &OSWrapper{}
+
 func NewOSWrapper(fsys fs.FS) (*OSWrapper, error) {
 	if _, ok := fsys.(fs.StatFS); !ok {
 		return nil, errors.New("must support StatFS")
 	}
-	if _, ok := fsys.(fs.ReadDirFS); !ok {
-		return nil, errors.New("must support ReadDirFS")
-	}
+	// if _, ok := fsys.(fs.ReadDirFS); !ok {
+	// 	return nil, errors.New("must support ReadDirFS")
+	// }
 
 	ret := &OSWrapper{
 		rfs:       fsys,
@@ -55,9 +58,10 @@ func NewOSWrapper(fsys fs.FS) (*OSWrapper, error) {
 
 func (w *OSWrapper) Open(name string) (fs.File, error)     { return w.rfs.Open(name) }
 func (w *OSWrapper) Stat(name string) (fs.FileInfo, error) { return w.rfs.(fs.StatFS).Stat(name) }
-func (w *OSWrapper) ReadDir(name string) ([]fs.DirEntry, error) {
-	return w.rfs.(fs.ReadDirFS).ReadDir(name)
-}
+
+// func (w *OSWrapper) ReadDir(name string) ([]fs.DirEntry, error) {
+// 	return w.rfs.(fs.ReadDirFS).ReadDir(name)
+// }
 
 func (w *OSWrapper) MkDirAll(path string, perm fs.FileMode) error { return w._MkDirAll(path, perm) }
 func (w *OSWrapper) Create(path string) (*os.File, error)         { return w._Create(path) }

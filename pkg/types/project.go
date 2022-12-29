@@ -53,6 +53,23 @@ func (p *Project) RateString() string {
 	return "-"
 }
 
+func (p *Project) SetRate(amount float32, denom string, hourly bool) {
+	if hourly {
+		p.Rate = &Project_Hourly{
+			Hourly: &Price{
+				Amount: amount,
+				Denom:  denom,
+			},
+		}
+	} else {
+		p.Rate = &Project_Total{
+			Total: &Price{
+				Amount: amount,
+				Denom:  denom,
+			},
+		}
+	}
+}
 func (pl *Project_LogEntry) Price(p *Project) *Price {
 	switch val := p.Rate.(type) {
 	case *Project_Hourly:
