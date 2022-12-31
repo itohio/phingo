@@ -3,9 +3,7 @@ account:
 client:
     id: client-id
 fileName: projects/first.yaml
-hourly:
-    amount: 75
-    denom: Eur
+hourly: 75
 id: first
 log:
     - description: some simple test

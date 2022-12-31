@@ -67,10 +67,11 @@ func newClientDelCmd() *cobra.Command {
 
 func newClientSetCmd() *cobra.Command {
 	var (
-		name        *string
-		description *string
-		contact     *[]string
-		notes       *[]string
+		fileNameFormat *string
+		name           *string
+		description    *string
+		contact        *[]string
+		notes          *[]string
 	)
 
 	cmd := &cobra.Command{
@@ -81,10 +82,11 @@ func newClientSetCmd() *cobra.Command {
 		Long:    ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cl := &types.Client{
-				Name:        *name,
-				Description: *description,
-				Notes:       *notes,
-				Contact:     make(map[string]string, len(*contact)),
+				Name:                  *name,
+				Description:           *description,
+				Notes:                 *notes,
+				InvoiceFileNameFormat: *fileNameFormat,
+				Contact:               make(map[string]string, len(*contact)),
 			}
 			parseKeyValue(cl.Contact, *contact)
 			err := globalRepository.SetClient(cl)
@@ -103,6 +105,7 @@ func newClientSetCmd() *cobra.Command {
 	}
 
 	name = cmd.Flags().StringP("name", "n", "", "Unique client name")
+	fileNameFormat = cmd.Flags().StringP("invoice-file-format", "f", "{Full Name}_{Code}_{Issue Date}", "Invoice File Name format")
 	description = cmd.Flags().StringP("denom", "d", "Eur", "client description")
 	contact = cmd.Flags().StringArrayP("contact", "c", nil, "Key-value pair for contact information, e.g. \"Name=My name\"")
 	notes = cmd.Flags().StringArrayP("note", "t", nil, "A list of notes")

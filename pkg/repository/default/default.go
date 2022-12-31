@@ -10,14 +10,8 @@ var (
 	//go:embed projects.md
 	defaultProjectsTemplate string
 
-	//go:embed project.md
-	defaultProjectTemplate string
-
 	//go:embed invoices.md
 	defaultInvoicesTemplate string
-
-	//go:embed invoice.md
-	defaultInvoiceTemplate string
 
 	//go:embed accounts.md
 	defaultAccountsTemplate string
@@ -88,22 +82,10 @@ func DefaultTemplates() []*types.Template {
 			Text:     []byte(defaultProjectsTemplate),
 		},
 		{
-			FileName: "project.md",
-			Id:       "project",
-			What:     "project",
-			Text:     []byte(defaultProjectTemplate),
-		},
-		{
 			FileName: "invoices.md",
 			Id:       "invoices",
 			What:     "invoices",
 			Text:     []byte(defaultInvoicesTemplate),
-		},
-		{
-			FileName: "invoice.md",
-			Id:       "invoice",
-			What:     "invoice",
-			Text:     []byte(defaultInvoiceTemplate),
 		},
 		{
 			FileName: "accounts.md",

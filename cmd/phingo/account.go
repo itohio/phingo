@@ -33,10 +33,13 @@ func newAccountCmd() *cobra.Command {
 
 func newAccountSetCmd() *cobra.Command {
 	var (
-		name     *string
-		denom    *string
-		decimals *int32
-		contact  *[]string
+		name           *string
+		fileNameFormat *string
+		codeFormat     *string
+		denom          *string
+		decimals       *int32
+		dueHours       *uint32
+		contact        *[]string
 	)
 
 	cmd := &cobra.Command{
@@ -50,10 +53,13 @@ func newAccountSetCmd() *cobra.Command {
 				return errors.New("decimals must be in the range (0, 10]")
 			}
 			acc := &types.Account{
-				Name:     *name,
-				Denom:    *denom,
-				Decimals: *decimals,
-				Contact:  make(map[string]string, len(*contact)),
+				Name:                  *name,
+				Denom:                 *denom,
+				Decimals:              *decimals,
+				InvoiceDuePeriod:      *dueHours,
+				InvoiceFileNameFormat: *fileNameFormat,
+				InvoiceCodeFormat:     *codeFormat,
+				Contact:               make(map[string]string, len(*contact)),
 			}
 			parseKeyValue(acc.Contact, *contact)
 			err := globalRepository.SetAccount(acc)
@@ -72,6 +78,9 @@ func newAccountSetCmd() *cobra.Command {
 	}
 
 	name = cmd.Flags().StringP("name", "n", "", "Unique account name")
+	fileNameFormat = cmd.Flags().StringP("invoice-file-format", "f", "{Full Name}_{Code}_{Issue Date}", "Invoice File Name format")
+	codeFormat = cmd.Flags().StringP("invoice-code-format", "F", "{Mon} {Count}", "Invoice Code format")
+	dueHours = cmd.Flags().Uint32P("invoice-due-period", "p", 24*3, "Invoice default due period (hours)")
 	denom = cmd.Flags().StringP("denom", "d", "Eur", "account primary denomination")
 	decimals = cmd.Flags().Int32P("decimals", "m", 2, "Number of digits after zero")
 	contact = cmd.Flags().StringArrayP("contact", "c", nil, "Key-value pair for contact information, e.g. \"Name=My name\"")

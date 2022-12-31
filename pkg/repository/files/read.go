@@ -1,12 +1,16 @@
 package repository
 
 import (
+	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"log"
 	"path"
+	"strconv"
 	"strings"
 
+	"github.com/itohio/phingo/pkg/bi"
 	defaultRepo "github.com/itohio/phingo/pkg/repository/default"
 	"github.com/itohio/phingo/pkg/types"
 
@@ -139,15 +143,13 @@ func (r *repository) readProjects() error {
 			if err != nil {
 				return err
 			}
-			prj.FileName = pth
-			id := path.Base(pth)
-			id = id[:len(id)-5]
-			if prj.Id == "" {
-				prj.Id = id
-			}
 			if prj.Name == "" {
-				prj.Name = strings.ToTitle(id[:1]) + id[1:]
+				return errors.New("badly formatted project: Name")
 			}
+			if prj.Id == "" {
+				return errors.New("badly formatted project: Id")
+			}
+			prj.FileName = pth
 			prj.Account = r.resolveAccount(prj.Account)
 			prj.Client = r.resolveClient(prj.Client)
 			r.projects = append(r.projects, &prj)
@@ -218,9 +220,16 @@ func (r *repository) readInvoices() error {
 			if !strings.HasSuffix(pth, ".yaml") {
 				return nil
 			}
-			b, id := path.Dir(pth), path.Base(pth)
+			b := path.Dir(pth)
 			if path.Dir(b) != defaultRepo.PathInvoices {
 				return nil
+			}
+			year, err := strconv.ParseInt(path.Base(b), 10, 32)
+			if err != nil {
+				return err
+			}
+			if year < 1971 || year > 3000 {
+				return errors.New("invalid year")
 			}
 
 			buf, err := r.readFile(pth)
@@ -239,14 +248,26 @@ func (r *repository) readInvoices() error {
 			if err != nil {
 				return err
 			}
-			inv.Year = path.Dir(b)
-			inv.FileName = pth
-			if inv.Id == "" {
-				id = id[:len(id)-5]
-				inv.Id = id
+			if _, err := bi.Parse(inv.IssueDate); err != nil {
+				return fmt.Errorf("badly formatted invoice: IssueDate %v", err)
 			}
-			inv.Account = r.resolveAccount(inv.Account)
+			if inv.Year() != int(year) {
+				return errors.New("badly formatted invoice: Year")
+			}
+			if inv.Id == "" {
+				return errors.New("badly formatted invoice: Id")
+			}
+			if inv.Code == "" {
+				return errors.New("badly formatted invoice: Code")
+			}
+			if inv.Account == nil {
+				return errors.New("badly formatted invoice: Account")
+			}
+			if inv.Client == nil {
+				return errors.New("badly formatted invoice: Client")
+			}
 			inv.Project = r.resolveProject(inv.Project)
+			inv.FileName = pth
 			r.invoices = append(r.invoices, &inv)
 			return nil
 		},

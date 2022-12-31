@@ -70,6 +70,19 @@ func (r *repository) SetInvoice(inv *types.Invoice) error {
 	if inv.Id == "" {
 		return errors.New("id must be already set")
 	}
+	if inv.Account == nil && inv.Project != nil {
+		inv.Account = inv.Project.Account
+	}
+	if inv.Client == nil && inv.Client != nil {
+		inv.Client = inv.Project.Client
+	}
+	if inv.Account == nil {
+		return errors.New("account must be set")
+	}
+	if inv.Client == nil {
+		return errors.New("client must be set")
+	}
+
 	r.invoicesModified[inv.Id] = modifyStruct{}
 	for i, val := range r.invoices {
 		if val == inv {

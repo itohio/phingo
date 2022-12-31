@@ -1,6 +1,8 @@
 package repository
 
 import (
+	"errors"
+	"fmt"
 	"io/fs"
 	"log"
 	"path"
@@ -148,7 +150,7 @@ func (r *repository) writeProjects() error {
 		}
 
 		if val.FileName == "" {
-			val.FileName = val.Id + ".yaml"
+			val.FileName = types.SanitizePath(val.Id) + ".yaml"
 		}
 
 		prj := proto.Clone(val).(*types.Project)
@@ -188,8 +190,13 @@ func (r *repository) writeProjects() error {
 func (r *repository) writeInvoices() error {
 	for _, val := range r.invoices {
 		if val.Id == "" {
-			log.Fatalln("invoice has empty Id")
-			continue
+			return errors.New("id must be already set")
+		}
+		if val.Account == nil {
+			return errors.New("account must be set")
+		}
+		if val.Client == nil {
+			return errors.New("client must be set")
 		}
 
 		_, ok := r.invoicesModified[val.Id]
@@ -197,19 +204,15 @@ func (r *repository) writeInvoices() error {
 			continue
 		}
 
+		val = proto.Clone(val).(*types.Invoice)
+		val.Project = &types.Project{
+			Id: val.Project.Id,
+		}
+
 		if val.FileName == "" {
-			val.FileName = val.Id + ".yaml"
+			val.FileName = types.SanitizePath(val.Code) + ".yaml"
 		}
-
-		inv := proto.Clone(val).(*types.Invoice)
-		if inv.Project != nil && inv.Project.Id != "" {
-			inv.Project = &types.Project{Id: inv.Project.Id}
-		}
-		if inv.Account != nil && inv.Account.Id != "" {
-			inv.Account = &types.Account{Id: inv.Account.Id}
-		}
-
-		buf, err := protojson.Marshal(inv)
+		buf, err := protojson.Marshal(val)
 		if err != nil {
 			return err
 		}
@@ -219,7 +222,7 @@ func (r *repository) writeInvoices() error {
 			return err
 		}
 
-		err = r.writeFile(path.Join(defaultRepo.PathInvoices, inv.Year, path.Base(inv.FileName)), buf)
+		err = r.writeFile(path.Join(defaultRepo.PathInvoices, fmt.Sprint(val.Year()), path.Base(val.FileName)), buf)
 		if err != nil {
 			return err
 		}

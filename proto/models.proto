@@ -37,6 +37,10 @@ message Account {
     int32 decimals = 4;
     map<string, string> contact = 10;
 
+    string invoiceFileNameFormat = 100;
+    string invoiceCodeFormat = 101;
+    uint32 invoiceDuePeriod = 102;
+
     Locale locale = 500;
 }
 
@@ -51,6 +55,8 @@ message Client {
     string description = 3;
     repeated string notes = 4;
     map<string, string> contact = 5;
+
+    string invoiceFileNameFormat = 100;
 
     Locale locale = 500;
 }
@@ -74,8 +80,8 @@ message Project {
     string fileName = 4;
 
     oneof rate {
-        Price hourly = 5;
-        Price total = 6;
+        float hourly = 5;
+        float total = 6;
     }
     bool completed = 7;
 
@@ -92,23 +98,37 @@ message Project {
 
 
 message Invoice {
-    message Entry {
+    message Item {
         string name = 1;
-        int64 amount = 2;
-        Price price = 3;
-        Price total = 4;
+        string unit = 2;
+        float amount = 3;
+        float rate = 4;
+        bool extra = 10;    // indicates whether this is an extra (applied after total)
     }
-    string fileName = 1;
-    string id = 2;
-    string date = 3;
-    string year = 4;
+    message Payment {
+        string name = 1;
+        string date = 2;
+        string comment = 3;
+        Price amount = 4;
+    }
+
+    string fileName = 1;    // internal: filename of the invoice file
+    string id = 2;          // unique id of the invoice
+    string code = 4;        // registration code
+    string issueDate = 5;   // date-time when the invoice was issued at
+    string dueDate = 6;     // the invoice must be payed until this date
 
     map<string, string> params = 10;
-    Project project = 30;
-    Account account = 31;
-    repeated Entry items = 50;
+    Project project = 30;   // Copy of a project (if any)
+    Client client = 32;     // Copy of a client
+    Account account = 33;   // Copy of an account
+
+    repeated Item items = 50;   // Billable, discount, shipping, etc items. Also, extra items.
+
     Price total = 100;
-    Price marketValue = 101;
+    Price marketValue = 101;    // if set, will force recalculation into this denomination
+
+    repeated Payment payments = 200;
 }
 
 message Template {

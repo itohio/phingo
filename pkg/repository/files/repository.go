@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -84,22 +85,22 @@ func (r *repository) Read() error {
 		defer closer.Close()
 	}
 	if err := r.readConfig(); err != nil {
-		return err
+		return fmt.Errorf("readConfig: %v", err)
 	}
 	if err := r.readAccounts(); err != nil {
-		return err
+		return fmt.Errorf("readAccounts: %v", err)
 	}
 	if err := r.readClients(); err != nil {
-		return err
+		return fmt.Errorf("readClients: %v", err)
 	}
 	if err := r.readTemplates(); err != nil {
-		return err
+		return fmt.Errorf("readTemplates: %v", err)
 	}
 	if err := r.readProjects(); err != nil {
-		return err
+		return fmt.Errorf("readProjects: %v", err)
 	}
 	if err := r.readInvoices(); err != nil {
-		return err
+		return fmt.Errorf("readInvoices: %v", err)
 	}
 	return nil
 }
@@ -109,22 +110,22 @@ func (r *repository) Write() error {
 		defer closer.Close()
 	}
 	if err := r.writeConfig(); err != nil {
-		return err
+		return fmt.Errorf("writeConfig: %v", err)
 	}
 	if err := r.writeAccounts(); err != nil {
-		return err
+		return fmt.Errorf("writeAccounts: %v", err)
 	}
 	if err := r.writeClients(); err != nil {
-		return err
+		return fmt.Errorf("writeClients: %v", err)
 	}
 	if err := r.writeTemplates(); err != nil {
-		return err
+		return fmt.Errorf("writeTemplates: %v", err)
 	}
 	if err := r.writeProjects(); err != nil {
-		return err
+		return fmt.Errorf("writeProjects: %v", err)
 	}
 	if err := r.writeInvoices(); err != nil {
-		return err
+		return fmt.Errorf("writeInvoices: %v", err)
 	}
 	return nil
 }
@@ -136,92 +137,148 @@ func (r *repository) Config() *types.Config {
 func (r *repository) Accounts(id ...string) []*types.Account {
 	mid := make(map[string]struct{}, len(id))
 	for _, id := range id {
+		if id == "" {
+			continue
+		}
 		mid[id] = struct{}{}
 	}
 
-	acc := make([]*types.Account, 0, len(mid))
-	for _, a := range r.accounts.Accounts {
-		if _, ok := mid[a.Id]; !ok && len(id) != 0 {
-			if _, ok := mid[a.Name]; !ok && len(id) != 0 {
-				continue
-			}
+	return types.Filter(r.accounts.Accounts, func(a *types.Account) bool {
+		if _, ok := mid[a.Id]; ok {
+			return true
 		}
-		acc = append(acc, a)
-	}
-
-	return acc
+		if _, ok := mid["name:"+a.Name]; ok {
+			return true
+		}
+		return false
+	})
 }
 
 func (r *repository) Clients(id ...string) []*types.Client {
 	mid := make(map[string]struct{}, len(id))
 	for _, id := range id {
+		if id == "" {
+			continue
+		}
 		mid[id] = struct{}{}
 	}
 
-	acc := make([]*types.Client, 0, len(mid))
-	for _, a := range r.clients.Clients {
-		if _, ok := mid[a.Id]; !ok && len(id) != 0 {
-			if _, ok := mid[a.Name]; !ok && len(id) != 0 {
-				continue
-			}
+	return types.Filter(r.clients.Clients, func(a *types.Client) bool {
+		if _, ok := mid[a.Id]; ok {
+			return true
 		}
-		acc = append(acc, a)
-	}
-
-	return acc
+		if _, ok := mid["name:"+a.Name]; ok {
+			return true
+		}
+		return false
+	})
 }
 
 func (r *repository) Projects(id ...string) []*types.Project {
 	mid := make(map[string]struct{}, len(id))
 	for _, id := range id {
+		if id == "" {
+			continue
+		}
 		mid[id] = struct{}{}
 	}
 
-	acc := make([]*types.Project, 0, len(mid))
-	for _, a := range r.projects {
-		if _, ok := mid[a.Id]; !ok && len(id) != 0 {
-			if _, ok := mid[a.Name]; !ok && len(id) != 0 {
-				continue
-			}
+	return types.Filter(r.projects, func(a *types.Project) bool {
+		if _, ok := mid[a.Id]; ok {
+			return true
 		}
-		acc = append(acc, a)
-	}
+		if _, ok := mid["name:"+a.Name]; ok {
+			return true
+		}
+		return false
+	})
+}
 
-	return acc
+func invoicesPredicate(mid map[string]struct{}) func(*types.Invoice) bool {
+	return func(a *types.Invoice) bool {
+		if _, ok := mid[a.Id]; ok {
+			return true
+		}
+		year := fmt.Sprintf("year:%d", a.Year())
+		if _, ok := mid[year]; ok {
+			return true
+		}
+		if a.Client == nil {
+			return false
+		}
+		client := fmt.Sprintf("client:%s", a.Client.Name)
+		if _, ok := mid[client]; ok {
+			return true
+		}
+		if _, ok := mid[fmt.Sprintf("%s;%s", year, client)]; ok {
+			return true
+		}
+		if a.Project == nil {
+			return false
+		}
+		project := fmt.Sprintf("project:%s", a.Project.Name)
+		if _, ok := mid[project]; ok {
+			return true
+		}
+		if _, ok := mid[fmt.Sprintf("%s;%s", year, project)]; ok {
+			return true
+		}
+		if _, ok := mid[fmt.Sprintf("%s;%s", client, project)]; ok {
+			return true
+		}
+		if _, ok := mid[fmt.Sprintf("%s;%s;%s", year, client, project)]; ok {
+			return true
+		}
+		return false
+	}
 }
 
 func (r *repository) Invoices(id ...string) []*types.Invoice {
 	mid := make(map[string]struct{}, len(id))
 	for _, id := range id {
+		if id == "" {
+			continue
+		}
 		mid[id] = struct{}{}
 	}
 
-	acc := make([]*types.Invoice, 0, len(mid))
-	for _, a := range r.invoices {
-		if _, ok := mid[a.Id]; !ok && len(id) != 0 {
+	return types.Filter(r.invoices, invoicesPredicate(mid))
+}
+
+func (r *repository) InvoicesCount(id ...string) int {
+	mid := make(map[string]struct{}, len(id))
+	for _, id := range id {
+		if id == "" {
 			continue
 		}
-		acc = append(acc, a)
+		mid[id] = struct{}{}
 	}
 
-	return acc
+	count := 0
+	predicate := invoicesPredicate(mid)
+	for _, inv := range r.invoices {
+		if predicate(inv) {
+			count++
+		}
+	}
+	return count
 }
 
 func (r *repository) Templates(id ...string) []*types.Template {
 	mid := make(map[string]struct{}, len(id))
 	for _, id := range id {
+		if id == "" {
+			continue
+		}
 		mid[id] = struct{}{}
 	}
 
-	acc := make([]*types.Template, 0, len(mid))
-	for _, a := range r.templates {
-		if _, ok := mid[a.Id]; !ok && len(id) != 0 {
-			continue
+	return types.Filter(r.templates, func(a *types.Template) bool {
+		if _, ok := mid[a.Id]; ok {
+			return true
 		}
-		acc = append(acc, a)
-	}
-
-	return acc
+		return false
+	})
 }
 
 func (r *repository) Close() error {

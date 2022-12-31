@@ -3,11 +3,13 @@ module github.com/itohio/phingo
 go 1.19
 
 require (
+	github.com/golang/protobuf v1.5.1
 	github.com/spf13/cobra v1.6.1
 	github.com/stephenafamo/goldmark-pdf v0.1.2
 	github.com/yuin/goldmark v1.5.3
 	github.com/yuin/goldmark-meta v1.1.0
 	google.golang.org/protobuf v1.26.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (

@@ -40,7 +40,6 @@ func newProjectSetCmd() *cobra.Command {
 	var (
 		hourly      *bool
 		amount      *float32
-		denom       *string
 		account     *string
 		client      *string
 		name        *string
@@ -71,7 +70,7 @@ func newProjectSetCmd() *cobra.Command {
 				Client:      cls[0],
 				Account:     accs[0],
 			}
-			p.SetRate(*amount, *denom, *hourly)
+			p.SetRate(*amount, *hourly)
 			if d, err := bi.SanitizeDateTime(*start); err == nil {
 				p.StartDate = d
 			}
@@ -99,7 +98,6 @@ func newProjectSetCmd() *cobra.Command {
 	amount = cmd.Flags().Float32P("amount", "", 0, "Provide the amount")
 	account = cmd.Flags().StringP("account", "", "", "Account ID")
 	client = cmd.Flags().StringP("client", "", "", "Client ID")
-	denom = cmd.Flags().StringP("denom", "", "Eur", "main project denomination")
 	name = cmd.Flags().StringP("name", "", "", "project short name")
 	description = cmd.Flags().StringP("description", "", "Eur", "project description")
 	start = cmd.Flags().StringP("start", "", "", "Set project start date")
@@ -119,7 +117,6 @@ func newProjectSetRateCmd() *cobra.Command {
 	var (
 		hourly *bool
 		amount *float32
-		denom  *string
 	)
 	cmd := &cobra.Command{
 		Use:     "set-rate",
@@ -130,7 +127,7 @@ func newProjectSetRateCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			projects := globalRepository.Projects(args...)
 			for _, p := range projects {
-				p.SetRate(*amount, *denom, *hourly)
+				p.SetRate(*amount, *hourly)
 				err := globalRepository.SetProject(p)
 				if err != nil {
 					return err
@@ -149,7 +146,6 @@ func newProjectSetRateCmd() *cobra.Command {
 
 	hourly = cmd.Flags().BoolP("hourly", "", false, "Set hourly rate (default is total per project)")
 	amount = cmd.Flags().Float32P("amount", "a", 0, "Provide the amount")
-	denom = cmd.Flags().StringP("denom", "d", "Eur", "Provide denomination")
 	cmd.MarkFlagRequired("amount")
 
 	return cmd

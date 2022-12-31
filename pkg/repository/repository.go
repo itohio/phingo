@@ -27,6 +27,7 @@ type Repository interface {
 	Projects(id ...string) []*types.Project
 
 	Invoices(id ...string) []*types.Invoice
+	InvoicesCount(id ...string) int
 	Templates(id ...string) []*types.Template
 
 	SetConfig(*types.Config) error

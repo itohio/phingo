@@ -1,0 +1,24 @@
+account:
+    contact:
+        Address: an address
+        Full Name: Name
+        Wallet Address: ethblsdkfslj
+    denom: Eth
+    id: acc-id
+    name: some-name
+client:
+    contact:
+        Address: an address
+        Director: someone important
+        Full Name: a full Name
+        Name: a Name
+    description: very profitable deal
+    id: client-id
+    name: westeros
+code: DEC 1/31
+dueDate: 2023-01-03 18:05
+fileName: dec-1-31.yaml
+id: 2022-DEC_1/31
+issueDate: 2022-12-31 18:05
+project:
+    id: first
