@@ -25,9 +25,9 @@ func makeClientFunc(config *types.Config) func(*types.Client) []string {
 }
 
 func makeClientFuncs(context *types.ClientTemplateContext) template.FuncMap {
-	return template.FuncMap{
+	return addDefaultFuncs(template.FuncMap{
 		"Contacts": makeContactsFunc(context.Config),
 		"Notes":    makeNotesFunc(context.Config),
 		"Client":   makeClientFunc(context.Config),
-	}
+	})
 }

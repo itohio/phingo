@@ -412,7 +412,7 @@ func newInvoiceShowCmd() *cobra.Command {
 				return err
 			}
 			cfg := globalRepository.Config()
-			export, err := engine.New("console", cfg)
+			export, err := engine.New("console", cfg, globalRepository.FS())
 			if err != nil {
 				return err
 			}

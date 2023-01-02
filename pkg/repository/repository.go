@@ -3,6 +3,7 @@ package repository
 import (
 	"errors"
 	"io"
+	"io/fs"
 
 	files "github.com/itohio/phingo/pkg/repository/files"
 	"github.com/itohio/phingo/pkg/types"
@@ -42,6 +43,8 @@ type Repository interface {
 	DelProject(*types.Project) error
 	DelInvoice(*types.Invoice) error
 	DelTemplate(*types.Template) error
+
+	FS() fs.FS
 }
 
 // New returns a new repository

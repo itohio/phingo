@@ -8,7 +8,7 @@ import (
 )
 
 func makeProjectFuncs(context *types.ProjectTemplateContext) template.FuncMap {
-	return template.FuncMap{
+	return addDefaultFuncs(template.FuncMap{
 		"TotalProgress": func(p *types.Project) float32 {
 			if p == nil {
 				return 0
@@ -60,5 +60,5 @@ func makeProjectFuncs(context *types.ProjectTemplateContext) template.FuncMap {
 		"Contacts": makeContactsFunc(context.Config),
 		"Account":  makeAccountFunc(context.Config),
 		"Client":   makeClientFunc(context.Config),
-	}
+	})
 }

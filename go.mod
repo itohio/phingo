@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/golang/protobuf v1.5.1
 	github.com/spf13/cobra v1.6.1
+	github.com/stefanfritsch/goldmark-fences v0.0.0-20221109095022-24cfb8a295fc
 	github.com/stephenafamo/goldmark-pdf v0.1.2
 	github.com/yuin/goldmark v1.5.3
 	github.com/yuin/goldmark-meta v1.1.0
@@ -23,3 +24,5 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
+
+replace github.com/stephenafamo/goldmark-pdf => github.com/itohio/goldmark-pdf v0.0.0-20221219152440-a96adfc5ba08

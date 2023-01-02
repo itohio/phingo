@@ -37,6 +37,7 @@ func (r *repository) writeFile(pth string, buf []byte) error {
 func (r *repository) removeFile(pth string) error {
 	// FIXME: make it more secure
 	pth = path.Join(r.url, pth)
+	_ = r.fs.Remove(pth + ".rm")
 	return r.fs.Rename(pth, pth+".rm")
 }
 
@@ -107,21 +108,22 @@ func (r *repository) writeClients() error {
 }
 
 func (r *repository) writeTemplates() error {
-	for _, tpl := range r.templates {
-		if tpl.Id == "" {
+	for _, val := range r.templates {
+		if val.Id == "" {
 			log.Fatalln("template has empty Id")
 			continue
 		}
 
-		_, ok := r.templatesModified[tpl.Id]
+		_, ok := r.templatesModified[val.Id]
 		if !ok {
 			continue
 		}
 
-		if tpl.FileName == "" {
-			tpl.FileName = tpl.Id + ".md"
+		if val.FileName == "" {
+			val.FileName = val.Id + ".md"
 		}
-		err := r.writeFile(path.Join(defaultRepo.PathTemplates, path.Base(tpl.FileName)), tpl.Text)
+		val.FileName = types.SanitizePath(val.FileName)
+		err := r.writeFile(path.Join(defaultRepo.PathTemplates, path.Base(val.FileName)), val.Text)
 		if err != nil {
 			return err
 		}
@@ -150,8 +152,9 @@ func (r *repository) writeProjects() error {
 		}
 
 		if val.FileName == "" {
-			val.FileName = types.SanitizePath(val.Id) + ".yaml"
+			val.FileName = val.Id + ".yaml"
 		}
+		val.FileName = types.SanitizePath(val.FileName)
 
 		prj := proto.Clone(val).(*types.Project)
 		if prj.Client != nil && prj.Client.Id != "" {
@@ -210,8 +213,9 @@ func (r *repository) writeInvoices() error {
 		}
 
 		if val.FileName == "" {
-			val.FileName = types.SanitizePath(val.Code) + ".yaml"
+			val.FileName = val.Code + ".yaml"
 		}
+		val.FileName = types.SanitizePath(val.FileName)
 		buf, err := protojson.Marshal(val)
 		if err != nil {
 			return err

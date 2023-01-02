@@ -88,7 +88,7 @@ func newClientSetCmd() *cobra.Command {
 				InvoiceFileNameFormat: *fileNameFormat,
 				Contact:               make(map[string]string, len(*contact)),
 			}
-			parseKeyValue(cl.Contact, *contact)
+			types.ParseContact(cl.Contact, *contact)
 			err := globalRepository.SetClient(cl)
 			if err != nil {
 				return err
@@ -132,7 +132,7 @@ func newClientContactCmd() *cobra.Command {
 				if cl.Contact == nil {
 					cl.Contact = make(map[string]string)
 				}
-				parseKeyValue(cl.Contact, *contact)
+				types.ParseContact(cl.Contact, *contact)
 				err := globalRepository.SetClient(cl)
 				if err != nil {
 					return err
@@ -207,7 +207,7 @@ func newClientShowCmd() *cobra.Command {
 			}
 
 			cfg := globalRepository.Config()
-			export, err := engine.New("console", cfg)
+			export, err := engine.New("console", cfg, globalRepository.FS())
 			if err != nil {
 				return err
 			}

@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -44,7 +45,7 @@ func newExportProjectCmd() *cobra.Command {
 				return globalRepository.Read()
 			},
 			RunE: func(cmd *cobra.Command, args []string) error {
-				eng, err := engine.New(*how, globalRepository.Config())
+				eng, err := engine.New(*how, globalRepository.Config(), globalRepository.FS())
 				if err != nil {
 					return err
 				}
@@ -63,6 +64,8 @@ func newExportProjectCmd() *cobra.Command {
 				if !strings.Contains(*output, ".") {
 					fname = fmt.Sprintf("%s.%s", *output, *how)
 				}
+
+				log.Println("Exporting to ", *output)
 				w, err := os.Create(fname)
 				if err != nil {
 					return err
@@ -95,7 +98,8 @@ func newExportInvoiceCmd() *cobra.Command {
 				return globalRepository.Read()
 			},
 			RunE: func(cmd *cobra.Command, args []string) error {
-				eng, err := engine.New(*how, globalRepository.Config())
+				config := globalRepository.Config()
+				eng, err := engine.New(*how, config, globalRepository.FS())
 				if err != nil {
 					return err
 				}
@@ -109,15 +113,26 @@ func newExportInvoiceCmd() *cobra.Command {
 				}
 
 				var acc *types.Account
-				accs := globalRepository.Accounts(*account)
-				if len(accs) == 1 {
-					acc = accs[0]
+				if *account != "" {
+					accs := globalRepository.Accounts(*account)
+					if len(accs) == 1 {
+						acc = accs[0]
+					}
+					if len(accs) > 1 {
+						return errors.New("there are multiple accounts with such name/id")
+					}
 				}
-				if len(accs) > 1 {
-					return errors.New("there are multiple accounts with such name/id")
-				}
-				invoices := globalRepository.Invoices(args...)
 
+				invoices := globalRepository.Invoices(args...)
+				if len(invoices) == 0 {
+					log.Println("Nothing to do")
+					return nil
+				}
+				if *output == "" {
+					*output = fmt.Sprintf("%s.%s", invoices[0].MakeFileName(), *how)
+				}
+
+				log.Println("Exporting to ", *output)
 				w, err := os.Create(*output)
 				if err != nil {
 					return err
@@ -130,7 +145,7 @@ func newExportInvoiceCmd() *cobra.Command {
 	)
 	how = cmd.Flags().StringP("how", "w", "pdf", "Defines how to export the entries (possible values are html and pdf)")
 	template = cmd.Flags().StringP("template", "t", "projects", "what template to use")
-	output = cmd.Flags().StringP("output", "o", "projects.pdf", "path to file to write output to")
+	output = cmd.Flags().StringP("output", "o", "", "path to file to write output to defaults to a file name according to invoice naming format)")
 	account = cmd.Flags().StringP("account", "a", "", "account id/name to use for the invoice instead of the one specified in the project")
 	return cmd
 }

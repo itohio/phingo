@@ -37,6 +37,10 @@ message Account {
     int32 decimals = 4;
     map<string, string> contact = 10;
 
+    bytes password = 50;    // Used for password-protected PDFs
+    bytes privateKey = 51;  // Used for signing HTML/PDFs
+    string keyring = 52;    // Used for signing HTML/PDFs
+
     string invoiceFileNameFormat = 100;
     string invoiceCodeFormat = 101;
     uint32 invoiceDuePeriod = 102;

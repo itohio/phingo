@@ -68,7 +68,6 @@ func (inv *Invoice) MakeFileName() string {
 	case acc != nil && acc.InvoiceFileNameFormat != "":
 		format = acc.InvoiceFileNameFormat
 	}
-
 	tokens := map[string]func() string{
 		"{Full Name}": func() string {
 			if acc == nil {
@@ -172,5 +171,5 @@ func (inv *Invoice) MakeFileName() string {
 	for k, val := range tokens {
 		format = strings.ReplaceAll(format, k, val())
 	}
-	return format
+	return SanitizePath(format)
 }

@@ -44,7 +44,7 @@ func newAccountSetCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:     "set",
-		Aliases: []string{"new", "set", "a"},
+		Aliases: []string{"new", "add", "a"},
 		Version: version.Version,
 		Short:   "set/add accounts",
 		Long:    ``,
@@ -61,7 +61,7 @@ func newAccountSetCmd() *cobra.Command {
 				InvoiceCodeFormat:     *codeFormat,
 				Contact:               make(map[string]string, len(*contact)),
 			}
-			parseKeyValue(acc.Contact, *contact)
+			types.ParseContact(acc.Contact, *contact)
 			err := globalRepository.SetAccount(acc)
 			if err != nil {
 				return err
@@ -107,7 +107,7 @@ func newAccountContactsCmd() *cobra.Command {
 				if acc.Contact == nil {
 					acc.Contact = make(map[string]string)
 				}
-				parseKeyValue(acc.Contact, *contact)
+				types.ParseContact(acc.Contact, *contact)
 
 				err := globalRepository.SetAccount(acc)
 				if err != nil {
@@ -180,7 +180,7 @@ func newAccountShowCmd() *cobra.Command {
 				return nil
 			}
 			cfg := globalRepository.Config()
-			export, err := engine.New("console", cfg)
+			export, err := engine.New("console", cfg, globalRepository.FS())
 			if err != nil {
 				return err
 			}

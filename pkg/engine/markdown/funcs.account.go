@@ -59,8 +59,8 @@ func makeAccountFunc(config *types.Config) func(*types.Account) []string {
 }
 
 func makeAccountFuncs(context *types.AccountTemplateContext) template.FuncMap {
-	return template.FuncMap{
+	return addDefaultFuncs(template.FuncMap{
 		"Contacts": makeContactsFunc(context.Config),
 		"Account":  makeAccountFunc(context.Config),
-	}
+	})
 }

@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"strings"
 
@@ -80,6 +81,10 @@ func New(url string) (*repository, error) {
 	return ret, nil
 }
 
+func (r *repository) FS() fs.FS {
+	return r.fs
+}
+
 func (r *repository) Read() error {
 	if closer, ok := r.fs.(io.Closer); ok {
 		defer closer.Close()
@@ -144,6 +149,9 @@ func (r *repository) Accounts(id ...string) []*types.Account {
 	}
 
 	return types.Filter(r.accounts.Accounts, func(a *types.Account) bool {
+		if len(mid) == 0 {
+			return true
+		}
 		if _, ok := mid[a.Id]; ok {
 			return true
 		}
@@ -164,6 +172,9 @@ func (r *repository) Clients(id ...string) []*types.Client {
 	}
 
 	return types.Filter(r.clients.Clients, func(a *types.Client) bool {
+		if len(mid) == 0 {
+			return true
+		}
 		if _, ok := mid[a.Id]; ok {
 			return true
 		}
@@ -184,6 +195,9 @@ func (r *repository) Projects(id ...string) []*types.Project {
 	}
 
 	return types.Filter(r.projects, func(a *types.Project) bool {
+		if len(mid) == 0 {
+			return true
+		}
 		if _, ok := mid[a.Id]; ok {
 			return true
 		}
@@ -196,6 +210,9 @@ func (r *repository) Projects(id ...string) []*types.Project {
 
 func invoicesPredicate(mid map[string]struct{}) func(*types.Invoice) bool {
 	return func(a *types.Invoice) bool {
+		if len(mid) == 0 {
+			return true
+		}
 		if _, ok := mid[a.Id]; ok {
 			return true
 		}
@@ -274,6 +291,9 @@ func (r *repository) Templates(id ...string) []*types.Template {
 	}
 
 	return types.Filter(r.templates, func(a *types.Template) bool {
+		if len(mid) == 0 {
+			return true
+		}
 		if _, ok := mid[a.Id]; ok {
 			return true
 		}

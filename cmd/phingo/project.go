@@ -292,7 +292,7 @@ func newProjectShowCmd() *cobra.Command {
 				return nil
 			}
 			cfg := globalRepository.Config()
-			export, err := engine.New("console", cfg)
+			export, err := engine.New("console", cfg, globalRepository.FS())
 			if err != nil {
 				return err
 			}

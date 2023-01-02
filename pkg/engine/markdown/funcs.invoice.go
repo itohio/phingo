@@ -8,7 +8,7 @@ import (
 )
 
 func makeInvoiceFuncs(context *types.InvoiceTemplateContext) template.FuncMap {
-	return template.FuncMap{
+	return addDefaultFuncs(template.FuncMap{
 		"TotalProgress": func(p *types.Project) float32 {
 			if p == nil {
 				return 0
@@ -57,5 +57,8 @@ func makeInvoiceFuncs(context *types.InvoiceTemplateContext) template.FuncMap {
 			}
 			return time.Duration(l.Duration).String()
 		},
-	}
+		"Client":   makeClientFunc(context.Config),
+		"Account":  makeAccountFunc(context.Config),
+		"Contacts": makeContactsFunc(context.Config),
+	})
 }

@@ -1,5 +1,7 @@
 package types
 
+import "strings"
+
 const (
 	ContactFullName                  = "Full Name"
 	ContactName                      = "Name"
@@ -16,3 +18,14 @@ const (
 	ContactWalletAddress             = "Wallet Address"
 	ContactDirector                  = "Director"
 )
+
+func ParseContact(out map[string]string, vals []string) {
+	for _, c := range vals {
+		kv := strings.SplitN(c, "=", 2)
+		if len(kv) == 2 && kv[1] != "" {
+			out[kv[0]] = kv[1]
+		} else {
+			delete(out, kv[0])
+		}
+	}
+}

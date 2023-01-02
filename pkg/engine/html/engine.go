@@ -3,9 +3,11 @@ package engine
 import (
 	"bytes"
 	"io"
+	"io/fs"
 
 	markdown "github.com/itohio/phingo/pkg/engine/markdown"
 	"github.com/itohio/phingo/pkg/types"
+	fences "github.com/stefanfritsch/goldmark-fences"
 	"github.com/yuin/goldmark"
 	meta "github.com/yuin/goldmark-meta"
 	"github.com/yuin/goldmark/extension"
@@ -20,7 +22,7 @@ type Engine struct {
 	md  goldmark.Markdown
 }
 
-func New(config *types.Config) (*Engine, error) {
+func New(config *types.Config, fsys fs.FS) (*Engine, error) {
 	mde, err := markdown.New(config)
 	if err != nil {
 		return nil, err
@@ -36,6 +38,7 @@ func New(config *types.Config) (*Engine, error) {
 			extension.NewTable(
 				extension.WithTableCellAlignMethod(extension.TableCellAlignAttribute),
 			),
+			&fences.Extender{},
 		),
 		goldmark.WithParserOptions(
 			parser.WithAttribute(),
