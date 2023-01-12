@@ -4,6 +4,7 @@ account:
         Full Name: Name
         Wallet Address: ethblsdkfslj
     denom: Eth
+    decimals: 10
     id: acc-id
     name: some-name
 client:
@@ -20,5 +21,36 @@ dueDate: 2023-01-08 00:00
 fileName: jan-1-5.yaml
 id: 2023-JAN_1/5
 issueDate: 2023-01-05 00:00
+items:
+    - amount: 144
+      name: Some extra work on phingo
+      rate: 27
+      unit: Hours
+    - amount: 5
+      name: several commits
+      rate: 100
+      unit: commits
+    - amount: 5
+      extra: true
+      name: Discount
+      rate: 15
+      unit: Percent
+    - amount: 21
+      extra: true
+      name: Tax
+      rate: 21
+      unit: Percent
+    - amount: 13
+      name: One time Discount
+      rate: 15
+      unit: Percent
+    - extra: true
+      name: Import Tax
+      rate: 5
+      unit: Percent
+    - extra: true
+      name: Arbitrary Discount
+      rate: 5
+      unit: Percent
 project:
     id: first

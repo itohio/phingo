@@ -1,4 +1,4 @@
-package bi
+package types
 
 import "testing"
 

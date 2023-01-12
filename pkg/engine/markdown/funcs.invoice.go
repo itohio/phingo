@@ -2,63 +2,30 @@ package engine
 
 import (
 	"text/template"
-	"time"
 
+	"github.com/itohio/phingo/pkg/bi"
 	"github.com/itohio/phingo/pkg/types"
 )
 
 func makeInvoiceFuncs(context *types.InvoiceTemplateContext) template.FuncMap {
 	return addDefaultFuncs(template.FuncMap{
-		"TotalProgress": func(p *types.Project) float32 {
-			if p == nil {
-				return 0
+		"Summary": func(inv *types.Invoice) *bi.InvoiceSummary {
+			if inv == nil {
+				return nil
 			}
-			return p.TotalProgress()
+			return bi.NewInvoiceSummary(inv, context.SelectedAccount(inv).Denom, uint32(context.SelectedAccount(inv).Decimals))
 		},
-		"TotalPrice": func(p *types.Project) string {
-			pr := p.TotalPrice()
-			if pr == nil {
-				return "-"
+		"ItemPrice": func(inv *types.Invoice, item *types.Invoice_Item) *types.Price {
+			if item == nil {
+				return nil
 			}
-			return pr.Pretty()
-		},
-		"TotalDuration": func(p *types.Project) string {
-			if p == nil {
-				return "-"
-			}
-			return p.TotalDuration().String()
-		},
-		"Rate": func(p *types.Project) string {
-			if p == nil {
-				return "-"
-			}
-			return p.RateString()
-		},
-		"Price": func(p *types.Project, l *types.Project_LogEntry) string {
-			if p == nil {
-				return "-"
-			}
-			if l == nil {
-				pr := p.TotalPrice()
-				if pr == nil {
-					return "-"
-				}
-				return pr.Pretty()
-			}
-			pr := l.Price(p)
-			if pr == nil {
-				return "-"
-			}
-			return pr.Pretty()
-		},
-		"Duration": func(l *types.Project_LogEntry) string {
-			if l == nil {
-				return "-"
-			}
-			return time.Duration(l.Duration).String()
+			return item.Price(context.SelectedAccount(inv).Denom)
 		},
 		"Client":   makeClientFunc(context.Config),
 		"Account":  makeAccountFunc(context.Config),
 		"Contacts": makeContactsFunc(context.Config),
+		"Convert": func(a, b *types.Price) *types.Price {
+			return bi.ConvertPrices(a, b)
+		},
 	})
 }

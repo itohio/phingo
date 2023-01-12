@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/itohio/phingo/pkg/bi"
 	"github.com/itohio/phingo/pkg/engine"
 	"github.com/itohio/phingo/pkg/types"
 	"github.com/itohio/phingo/pkg/version"
@@ -21,9 +20,6 @@ func newInvoiceCmd() *cobra.Command {
 		Version: version.Version,
 		Short:   "manage invoices",
 		Long:    ``,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return nil
-		},
 	}
 
 	cmd.AddCommand(
@@ -118,7 +114,7 @@ func newInvoiceSetCmd() *cobra.Command {
 				duePeriod = 3 * 24
 			}
 			if *issueDate != "" {
-				t, err := bi.Parse(*issueDate)
+				t, err := types.ParseTime(*issueDate)
 				if err != nil {
 					return err
 				}
@@ -126,14 +122,14 @@ func newInvoiceSetCmd() *cobra.Command {
 			}
 			due := now.Add(time.Hour * duePeriod)
 			if *dueDate != "" {
-				t, err := bi.Parse(*dueDate)
+				t, err := types.ParseTime(*dueDate)
 				if err != nil {
 					return err
 				}
 				due = t
 			}
-			*issueDate = bi.Format(now)
-			*dueDate = bi.Format(due)
+			*issueDate = types.FormatTime(now)
+			*dueDate = types.FormatTime(due)
 			if due.Sub(now) < time.Hour {
 				return errors.New("due date must be at least 1 hour in the future")
 			}
@@ -251,6 +247,9 @@ func newInvoiceItemCmd() *cobra.Command {
 			}
 
 			if !cmd.Flags().Lookup("index").Changed {
+				if *name == "" {
+					return errors.New("name must be specified")
+				}
 				inv.Items = append(
 					inv.Items,
 					&types.Invoice_Item{
@@ -289,13 +288,12 @@ func newInvoiceItemCmd() *cobra.Command {
 	name = cmd.Flags().StringP("name", "n", "", "Name of the billable item")
 	unit = cmd.Flags().StringP("unit", "u", "Hours", "Unit of the billable item")
 	amount = cmd.Flags().Float32P("amount", "a", 0, "Amount")
-	rate = cmd.Flags().Float32P("rate", "r", 0, "Rate per item")
+	rate = cmd.Flags().Float32P("rate", "t", 0, "Rate per item")
 	extra = cmd.Flags().BoolP("extra", "e", false, "If true, then this item will be applied after subtotal calculations")
 	del = cmd.Flags().BoolP("delete", "D", false, "If true, deletes the item from invoice")
 	index = cmd.Flags().IntP("index", "i", 0, "Index of the invoice item to modify (negative numbers start from the end)")
 	projectItem = cmd.Flags().IntP("project-item", "p", 0, "Import item from project items list using the index (negative numbers start from the end)")
 
-	cmd.MarkFlagsRequiredTogether("delete", "index")
 	cmd.MarkFlagsMutuallyExclusive("project-item", "name")
 	cmd.MarkFlagsMutuallyExclusive("project-item", "amount")
 	cmd.MarkFlagsMutuallyExclusive("project-item", "delete")
@@ -341,12 +339,12 @@ func newInvoicePaymentCmd() *cobra.Command {
 			}
 			if cmd.Flags().Lookup("date").Changed {
 				var err error
-				*date, err = bi.SanitizeDateTime(*date)
+				*date, err = types.SanitizeDateTime(*date)
 				if err != nil {
 					return err
 				}
 			} else {
-				*date = bi.Format(time.Now())
+				*date = types.Now()
 			}
 			if !cmd.Flags().Lookup("index").Changed {
 				inv.Payments = append(
@@ -400,6 +398,7 @@ func newInvoicePaymentCmd() *cobra.Command {
 }
 
 func newInvoiceShowCmd() *cobra.Command {
+	var short *bool
 	cmd := &cobra.Command{
 		Use:     "show",
 		Aliases: []string{"list", "ls"},
@@ -407,9 +406,13 @@ func newInvoiceShowCmd() *cobra.Command {
 		Short:   "show all invoices",
 		Long:    ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			err := globalRepository.Read()
-			if err != nil {
-				return err
+			invoices := globalRepository.Invoices(args...)
+			if *short {
+				for _, val := range invoices {
+					fmt.Printf("%d: '%s': %s", val.Year(), val.Id, val.Code)
+					fmt.Println()
+				}
+				return nil
 			}
 			cfg := globalRepository.Config()
 			export, err := engine.New("console", cfg, globalRepository.FS())
@@ -420,7 +423,6 @@ func newInvoiceShowCmd() *cobra.Command {
 			if len(tpl) == 0 {
 				return errors.New("please create a invoices.md template")
 			}
-			invoices := globalRepository.Invoices(args...)
 
 			return export.ExportInvoices(os.Stdout, tpl[0], invoices, nil)
 		},
@@ -428,6 +430,7 @@ func newInvoiceShowCmd() *cobra.Command {
 			return globalRepository.Read()
 		},
 	}
+	short = cmd.Flags().BoolP("short", "s", false, "show only names and IDs")
 
 	return cmd
 }

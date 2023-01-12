@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/itohio/phingo/pkg/bi"
 	defaultRepo "github.com/itohio/phingo/pkg/repository/default"
 	"github.com/itohio/phingo/pkg/types"
 
@@ -248,7 +247,7 @@ func (r *repository) readInvoices() error {
 			if err != nil {
 				return err
 			}
-			if _, err := bi.Parse(inv.IssueDate); err != nil {
+			if _, err := types.ParseTime(inv.IssueDate); err != nil {
 				return fmt.Errorf("badly formatted invoice: IssueDate %v", err)
 			}
 			if inv.Year() != int(year) {

@@ -2,12 +2,26 @@ package types
 
 var lowNames = []string{"Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"}
 var tensNames = []string{"Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"}
-var bigNames = []string{"Thousand", "Million", "Billion"}
+var bigNames = []string{" Hundred", " Thousand", " Million", " Billion"}
+
+func convert999999(num int) string {
+	s1 := convert999(num/1_000) + bigNames[1]
+	s2 := convert999(num % 1_000)
+	if num < 1_000 {
+		return s2
+	} else if num%1_000 == 0 {
+		return s1
+	} else {
+		return s1 + " " + s2
+	}
+}
 
 func convert999(num int) string {
-	s1 := convert99(num/100) + " Hundred"
+	s1 := convert99(num/100) + bigNames[0]
 	s2 := convert99(num % 100)
-	if num%100 == 0 {
+	if num < 100 {
+		return s2
+	} else if num%100 == 0 {
 		return s1
 	} else {
 		return s1 + " " + s2
@@ -35,13 +49,27 @@ func Num2Words(num int) string {
 	case num < 1_000:
 		return convert999(num)
 	case num < 1_000_000:
-		s1 := convert999(num / 1_000)
-		s2 := convert999(num % 1_000)
-		return s1 + bigNames[1] + s2
+		return convert999999(num)
 	case num < 1_000_000_000:
-		s1 := Num2Words(num / 1_000_000)
+		s1 := Num2Words(num/1_000_000) + bigNames[2]
 		s2 := Num2Words(num % 1_000_000)
-		return s1 + bigNames[2] + s2
+		if num < 1_000_000 {
+			return s2
+		} else if num%1_000_000 == 0 {
+			return s1
+		} else {
+			return s1 + " " + s2
+		}
+	case num < 1_000_000_000_000:
+		s1 := Num2Words(num/1_000_000_000) + bigNames[3]
+		s2 := Num2Words(num % 1_000_000_000)
+		if num < 1_000_000_000 {
+			return s2
+		} else if num%1_000_000_000 == 0 {
+			return s1
+		} else {
+			return s1 + " " + s2
+		}
 	default:
 		return "More than a trillion"
 	}

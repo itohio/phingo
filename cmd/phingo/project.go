@@ -7,7 +7,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/itohio/phingo/pkg/bi"
 	"github.com/itohio/phingo/pkg/engine"
 	"github.com/itohio/phingo/pkg/types"
 	"github.com/itohio/phingo/pkg/version"
@@ -71,14 +70,14 @@ func newProjectSetCmd() *cobra.Command {
 				Account:     accs[0],
 			}
 			p.SetRate(*amount, *hourly)
-			if d, err := bi.SanitizeDateTime(*start); err == nil {
+			if d, err := types.SanitizeDateTime(*start); err == nil {
 				p.StartDate = d
 			}
-			if d, err := bi.SanitizeDateTime(*end); err == nil {
+			if d, err := types.SanitizeDateTime(*end); err == nil {
 				p.EndDate = d
 			}
 			if *duration > time.Hour {
-				p.EndDate = bi.Format(time.Now().Add(*duration))
+				p.EndDate = types.FormatTime(time.Now().Add(*duration))
 			}
 			err := globalRepository.SetProject(p)
 			if err != nil {
@@ -231,14 +230,14 @@ func newProjectSetDatesCmd() *cobra.Command {
 			projects := globalRepository.Projects(args...)
 
 			for _, p := range projects {
-				if d, err := bi.SanitizeDateTime(*start); err == nil {
+				if d, err := types.SanitizeDateTime(*start); err == nil {
 					p.StartDate = d
 				}
-				if d, err := bi.SanitizeDateTime(*end); err == nil {
+				if d, err := types.SanitizeDateTime(*end); err == nil {
 					p.EndDate = d
 				}
 				if *duration > time.Hour {
-					p.EndDate = bi.Format(time.Now().Add(*duration))
+					p.EndDate = types.FormatTime(time.Now().Add(*duration))
 				}
 				err := globalRepository.SetProject(p)
 				if err != nil {
@@ -361,7 +360,7 @@ func newProjectLogCmd() *cobra.Command {
 		Short:     "log project progress",
 		Long:      ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			startedSanitized, err := bi.SanitizeDateTime(*started)
+			startedSanitized, err := types.SanitizeDateTime(*started)
 			if err != nil {
 				return err
 			}
@@ -392,7 +391,7 @@ func newProjectLogCmd() *cobra.Command {
 	completed = cmd.Flags().BoolP("completed", "c", false, "Mark the project as completed")
 	progress = cmd.Flags().Float32P("progress", "p", 0, "Record the relative progress (0 = unchanged) - cumulative should add up to 100% at most")
 	duration = cmd.Flags().DurationP("time-spent", "t", 0, "Time spent doing the task")
-	started = cmd.Flags().StringP("started", "s", bi.Now(), "Date and time when the task started")
+	started = cmd.Flags().StringP("started", "s", types.Now(), "Date and time when the task started")
 	description = cmd.Flags().StringP("description", "d", "", "Description")
 
 	cmd.MarkFlagRequired("progress")

@@ -154,7 +154,7 @@ func (r *repository) writeProjects() error {
 		if val.FileName == "" {
 			val.FileName = val.Id + ".yaml"
 		}
-		val.FileName = types.SanitizePath(val.FileName)
+		val.FileName = types.SanitizePath(path.Base(val.FileName))
 
 		prj := proto.Clone(val).(*types.Project)
 		if prj.Client != nil && prj.Client.Id != "" {
@@ -174,7 +174,7 @@ func (r *repository) writeProjects() error {
 			return err
 		}
 
-		err = r.writeFile(path.Join(defaultRepo.PathProjects, path.Base(prj.FileName)), buf)
+		err = r.writeFile(path.Join(defaultRepo.PathProjects, prj.FileName), buf)
 		if err != nil {
 			return err
 		}
@@ -185,7 +185,7 @@ func (r *repository) writeProjects() error {
 		if !ms.delete {
 			continue
 		}
-		r.removeFile(path.Join(defaultRepo.PathProjects, path.Base(ms.filename)))
+		r.removeFile(path.Join(defaultRepo.PathProjects, ms.filename))
 	}
 	return nil
 }
@@ -215,7 +215,7 @@ func (r *repository) writeInvoices() error {
 		if val.FileName == "" {
 			val.FileName = val.Code + ".yaml"
 		}
-		val.FileName = types.SanitizePath(val.FileName)
+		val.FileName = types.SanitizePath(path.Base(val.FileName))
 		buf, err := protojson.Marshal(val)
 		if err != nil {
 			return err
@@ -226,7 +226,7 @@ func (r *repository) writeInvoices() error {
 			return err
 		}
 
-		err = r.writeFile(path.Join(defaultRepo.PathInvoices, fmt.Sprint(val.Year()), path.Base(val.FileName)), buf)
+		err = r.writeFile(path.Join(defaultRepo.PathInvoices, fmt.Sprint(val.Year()), val.FileName), buf)
 		if err != nil {
 			return err
 		}

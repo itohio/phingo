@@ -3,6 +3,8 @@ package engine
 import (
 	"text/template"
 	"time"
+
+	"github.com/itohio/phingo/pkg/types"
 )
 
 func addDefaultFuncs(m template.FuncMap) template.FuncMap {
@@ -38,6 +40,18 @@ func addDefaultFuncs(m template.FuncMap) template.FuncMap {
 		},
 		"now": func() time.Time {
 			return time.Now()
+		},
+		"Pretty": func(price *types.Price) string {
+			if price == nil {
+				return "-"
+			}
+			return price.Pretty()
+		},
+		"Words": func(price *types.Price) string {
+			if price == nil {
+				return "-"
+			}
+			return price.Words()
 		},
 	}
 

@@ -1,4 +1,4 @@
-package bi
+package types
 
 import (
 	"errors"
@@ -25,22 +25,22 @@ var acceptedTimeFormats = []string{
 }
 
 func SanitizeDateTime(val string) (string, error) {
-	t, err := Parse(val)
+	t, err := ParseTime(val)
 	if err != nil {
 		return "", err
 	}
-	return Format(t), nil
+	return FormatTime(t), nil
 }
 
 func Now() string {
 	return time.Now().Format(SaneDateTimeLayout)
 }
 
-func Format(t time.Time) string {
+func FormatTime(t time.Time) string {
 	return t.Format(SaneDateTimeLayout)
 }
 
-func Parse(val string) (time.Time, error) {
+func ParseTime(val string) (time.Time, error) {
 	for _, fmt := range acceptedTimeFormats {
 		if t, err := time.Parse(fmt, val); err == nil {
 			return t, nil

@@ -3,13 +3,11 @@ package types
 import (
 	"fmt"
 	"strings"
-
-	"github.com/itohio/phingo/pkg/bi"
 )
 
-type InvoicesArr []*Invoice
+type Invoices []*Invoice
 
-func (arr InvoicesArr) ById(id string) *Invoice {
+func (arr Invoices) ById(id string) *Invoice {
 	for _, a := range arr {
 		if a == nil {
 			continue
@@ -21,7 +19,7 @@ func (arr InvoicesArr) ById(id string) *Invoice {
 	return nil
 }
 
-func (arr InvoicesArr) ByCode(code string) *Invoice {
+func (arr Invoices) ByCode(code string) *Invoice {
 	for _, a := range arr {
 		if a == nil {
 			continue
@@ -33,7 +31,7 @@ func (arr InvoicesArr) ByCode(code string) *Invoice {
 	return nil
 }
 
-func (arr InvoicesArr) ByYear(year int) *Invoice {
+func (arr Invoices) ByYear(year int) *Invoice {
 	for _, a := range arr {
 		if a == nil {
 			continue
@@ -45,12 +43,30 @@ func (arr InvoicesArr) ByYear(year int) *Invoice {
 	return nil
 }
 
+func (it *Invoice_Item) AdjustedRate() float32 {
+	switch strings.ToLower(it.Unit) {
+	case "percent":
+		fallthrough
+	case "%":
+		return it.Rate / 100
+	}
+	return it.Rate
+}
+
+func (it *Invoice_Item) Price(denom string) *Price {
+	pr := &Price{
+		Amount: it.Amount * it.AdjustedRate(),
+		Denom:  denom,
+	}
+	return pr
+}
+
 func (inv *Invoice) MakeId() string {
 	return fmt.Sprintf("%d-%s", inv.Year(), strings.ReplaceAll(inv.Code, " ", "_"))
 }
 
 func (inv *Invoice) Year() int {
-	t, err := bi.Parse(inv.IssueDate)
+	t, err := ParseTime(inv.IssueDate)
 	if err != nil {
 		return 0
 	}
@@ -154,14 +170,14 @@ func (inv *Invoice) MakeFileName() string {
 			return inv.Code
 		},
 		"{Issue Date}": func() string {
-			t, err := bi.Parse(inv.IssueDate)
+			t, err := ParseTime(inv.IssueDate)
 			if err != nil {
 				return "-"
 			}
 			return t.Format("20061011")
 		},
 		"{Due Date}": func() string {
-			t, err := bi.Parse(inv.DueDate)
+			t, err := ParseTime(inv.DueDate)
 			if err != nil {
 				return "-"
 			}
@@ -172,4 +188,14 @@ func (inv *Invoice) MakeFileName() string {
 		format = strings.ReplaceAll(format, k, val())
 	}
 	return SanitizePath(format)
+}
+
+func (ic *InvoiceTemplateContext) SelectedAccount(inv *Invoice) *Account {
+	if ic == nil || ic.Account == nil {
+		if inv == nil {
+			return nil
+		}
+		return inv.Account
+	}
+	return ic.Account
 }
