@@ -25,7 +25,7 @@ func makeInvoiceFuncs(context *types.InvoiceTemplateContext) template.FuncMap {
 		"Account":  makeAccountFunc(context.Config),
 		"Contacts": makeContactsFunc(context.Config),
 		"Convert": func(a, b *types.Price) *types.Price {
-			return bi.ConvertPrices(a, b)
+			return a.Convert(b)
 		},
 	})
 }

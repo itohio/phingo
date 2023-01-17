@@ -1,9 +1,10 @@
-//go:build nogui
-// +build nogui
+//go:build !nogui
+// +build !nogui
 
 package main
 
 import (
+	"github.com/itohio/phingo/pkg/app"
 	"github.com/itohio/phingo/pkg/repository"
 	"github.com/itohio/phingo/pkg/version"
 	"github.com/spf13/cobra"
@@ -27,6 +28,10 @@ func newRootCmd(commands ...*cobra.Command) *cobra.Command {
 				return nil
 			}
 			return globalRepository.Close()
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			a := app.New(globalRepository)
+			return a.Run()
 		},
 	}
 
