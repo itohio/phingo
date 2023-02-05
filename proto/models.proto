@@ -114,6 +114,7 @@ message Invoice {
         string date = 2;
         string comment = 3;
         Price amount = 4;
+        float marketValue = 5; // if set, indicates market value relative to invoice denomination
     }
 
     string fileName = 1;    // internal: filename of the invoice file

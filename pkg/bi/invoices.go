@@ -13,10 +13,12 @@ type InvoiceItem struct {
 }
 
 type InvoiceSummary struct {
-	Subtotal *types.Price
-	Discount *types.Price
-	Tax      *types.Price
-	Total    *types.Price
+	Subtotal   *types.Price
+	Discount   *types.Price
+	Tax        *types.Price
+	Total      *types.Price
+	TotalPayed *types.Price
+	Remaining  *types.Price
 
 	Discounts []*InvoiceItem
 	Taxes     []*InvoiceItem
@@ -53,6 +55,9 @@ func NewInvoiceSummary(inv *types.Invoice, denom string, decimals uint32) *Invoi
 		}
 	}
 
+	// TODO: calculate payments
+	// NOTE: Payments may be in different currency, so conversion has to be done
+
 	return ret
 }
 
@@ -83,5 +88,3 @@ func SubtotalPercent(arr []*types.Invoice_Item, name string) float32 {
 	}
 	return rate
 }
-
-type InvoicePayments []*types.Invoice_Payment

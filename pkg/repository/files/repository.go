@@ -139,16 +139,8 @@ func (r *repository) Config() *types.Config {
 	return r.config
 }
 
-func (r *repository) Accounts(id ...string) []*types.Account {
-	mid := make(map[string]struct{}, len(id))
-	for _, id := range id {
-		if id == "" {
-			continue
-		}
-		mid[id] = struct{}{}
-	}
-
-	return types.Filter(r.accounts.Accounts, func(a *types.Account) bool {
+func accountsPredicate(mid map[string]struct{}) func(a *types.Account) bool {
+	return func(a *types.Account) bool {
 		if len(mid) == 0 {
 			return true
 		}
@@ -159,7 +151,53 @@ func (r *repository) Accounts(id ...string) []*types.Account {
 			return true
 		}
 		return false
-	})
+	}
+}
+
+func (r *repository) Accounts(id ...string) []*types.Account {
+	mid := make(map[string]struct{}, len(id))
+	for _, id := range id {
+		if id == "" {
+			continue
+		}
+		mid[id] = struct{}{}
+	}
+
+	return types.Filter(r.accounts.Accounts, accountsPredicate(mid))
+}
+
+func (r *repository) AccountsCount(id ...string) int {
+	mid := make(map[string]struct{}, len(id))
+	for _, id := range id {
+		if id == "" {
+			continue
+		}
+		mid[id] = struct{}{}
+	}
+
+	count := 0
+	predicate := accountsPredicate(mid)
+	for _, inv := range r.accounts.Accounts {
+		if predicate(inv) {
+			count++
+		}
+	}
+	return count
+}
+
+func clientsPredicate(mid map[string]struct{}) func(a *types.Client) bool {
+	return func(a *types.Client) bool {
+		if len(mid) == 0 {
+			return true
+		}
+		if _, ok := mid[a.Id]; ok {
+			return true
+		}
+		if _, ok := mid["name:"+a.Name]; ok {
+			return true
+		}
+		return false
+	}
 }
 
 func (r *repository) Clients(id ...string) []*types.Client {
@@ -171,7 +209,30 @@ func (r *repository) Clients(id ...string) []*types.Client {
 		mid[id] = struct{}{}
 	}
 
-	return types.Filter(r.clients.Clients, func(a *types.Client) bool {
+	return types.Filter(r.clients.Clients, clientsPredicate(mid))
+}
+
+func (r *repository) ClientsCount(id ...string) int {
+	mid := make(map[string]struct{}, len(id))
+	for _, id := range id {
+		if id == "" {
+			continue
+		}
+		mid[id] = struct{}{}
+	}
+
+	count := 0
+	predicate := clientsPredicate(mid)
+	for _, inv := range r.clients.Clients {
+		if predicate(inv) {
+			count++
+		}
+	}
+	return count
+}
+
+func projectsPredicate(mid map[string]struct{}) func(a *types.Project) bool {
+	return func(a *types.Project) bool {
 		if len(mid) == 0 {
 			return true
 		}
@@ -182,7 +243,7 @@ func (r *repository) Clients(id ...string) []*types.Client {
 			return true
 		}
 		return false
-	})
+	}
 }
 
 func (r *repository) Projects(id ...string) []*types.Project {
@@ -194,18 +255,26 @@ func (r *repository) Projects(id ...string) []*types.Project {
 		mid[id] = struct{}{}
 	}
 
-	return types.Filter(r.projects, func(a *types.Project) bool {
-		if len(mid) == 0 {
-			return true
+	return types.Filter(r.projects, projectsPredicate(mid))
+}
+
+func (r *repository) ProjectsCount(id ...string) int {
+	mid := make(map[string]struct{}, len(id))
+	for _, id := range id {
+		if id == "" {
+			continue
 		}
-		if _, ok := mid[a.Id]; ok {
-			return true
+		mid[id] = struct{}{}
+	}
+
+	count := 0
+	predicate := projectsPredicate(mid)
+	for _, inv := range r.projects {
+		if predicate(inv) {
+			count++
 		}
-		if _, ok := mid["name:"+a.Name]; ok {
-			return true
-		}
-		return false
-	})
+	}
+	return count
 }
 
 func invoicesPredicate(mid map[string]struct{}) func(*types.Invoice) bool {
@@ -281,6 +350,18 @@ func (r *repository) InvoicesCount(id ...string) int {
 	return count
 }
 
+func templatesPredicate(mid map[string]struct{}) func(a *types.Template) bool {
+	return func(a *types.Template) bool {
+		if len(mid) == 0 {
+			return true
+		}
+		if _, ok := mid[a.Id]; ok {
+			return true
+		}
+		return false
+	}
+}
+
 func (r *repository) Templates(id ...string) []*types.Template {
 	mid := make(map[string]struct{}, len(id))
 	for _, id := range id {
@@ -290,15 +371,26 @@ func (r *repository) Templates(id ...string) []*types.Template {
 		mid[id] = struct{}{}
 	}
 
-	return types.Filter(r.templates, func(a *types.Template) bool {
-		if len(mid) == 0 {
-			return true
+	return types.Filter(r.templates, templatesPredicate(mid))
+}
+
+func (r *repository) TemplatesCount(id ...string) int {
+	mid := make(map[string]struct{}, len(id))
+	for _, id := range id {
+		if id == "" {
+			continue
 		}
-		if _, ok := mid[a.Id]; ok {
-			return true
+		mid[id] = struct{}{}
+	}
+
+	count := 0
+	predicate := templatesPredicate(mid)
+	for _, inv := range r.templates {
+		if predicate(inv) {
+			count++
 		}
-		return false
-	})
+	}
+	return count
 }
 
 func (r *repository) Close() error {

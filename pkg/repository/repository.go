@@ -18,18 +18,23 @@ type Repository interface {
 	// Accounts returns a list of accounts that maches the Id.
 	// The ID can be either an ID or a Name.
 	Accounts(id ...string) []*types.Account
+	AccountsCount(id ...string) int
 
 	// Clients returns a list of clients that maches the Id.
 	// The ID can be either an ID or a Name.
 	Clients(id ...string) []*types.Client
+	ClientsCount(id ...string) int
 
 	// Projects returns a list of projects that maches the Id.
 	// The ID can be either an ID or a Name.
 	Projects(id ...string) []*types.Project
+	ProjectsCount(id ...string) int
 
 	Invoices(id ...string) []*types.Invoice
 	InvoicesCount(id ...string) int
+
 	Templates(id ...string) []*types.Template
+	TemplatesCount(id ...string) int
 
 	SetConfig(*types.Config) error
 	SetAccount(*types.Account) error
