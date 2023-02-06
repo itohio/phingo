@@ -49,46 +49,42 @@ func (a *App) newAccountsContents() fyne.CanvasObject {
 
 func (a *App) editAccount(acc *types.Account) {
 	addContact := widget.NewButtonWithIcon("", theme.ContentAddIcon(), func() {})
+
+	eName := widget.NewEntry()
+	eName.Text = acc.Name
+	eDecimals := widget.NewEntry()
+	eDecimals.Text = fmt.Sprint(acc.Decimals)
+	eDecimals.Validator = validateIntMin(0)
+	eDenomination := widget.NewEntry()
+	eDenomination.Text = acc.Denom
+	eInvoiceFileFormat := widget.NewEntry()
+	eInvoiceFileFormat.Text = acc.InvoiceFileNameFormat
+	eInvoiceCodeFormat := widget.NewEntry()
+	eInvoiceCodeFormat.Text = acc.InvoiceCodeFormat
+	eInvoiceDuePeriod := widget.NewEntry()
+	eInvoiceDuePeriod.Text = fmt.Sprint(acc.InvoiceDuePeriod)
+	eInvoiceDuePeriod.Validator = validateDurationMin(0)
+
 	items := []*widget.FormItem{
 		widget.NewFormItem("ID", widget.NewLabel(acc.Id)),
-		widget.NewFormItem("Name", widget.NewLabel(acc.Name)),
-		widget.NewFormItem("Denomination", widget.NewLabel(acc.Denom)),
-		widget.NewFormItem("Decimals", widget.NewLabel(fmt.Sprint(acc.Decimals))),
-		widget.NewFormItem("Invoice File Format", widget.NewLabel(acc.InvoiceFileNameFormat)),
-		widget.NewFormItem("Invoice Code Format", widget.NewLabel(acc.InvoiceCodeFormat)),
-		widget.NewFormItem("Invoice Due Period", widget.NewLabel(fmt.Sprint(acc.InvoiceDuePeriod))),
+		widget.NewFormItem("Name", eName),
+		widget.NewFormItem("Denomination", eDenomination),
+		widget.NewFormItem("Decimals", eDecimals),
+		widget.NewFormItem("Invoice File Format", eInvoiceFileFormat),
+		widget.NewFormItem("Invoice Code Format", eInvoiceCodeFormat),
+		widget.NewFormItem("Invoice Due Period", eInvoiceDuePeriod),
 		widget.NewFormItem("Contacts:", container.NewHBox(layout.NewSpacer(), addContact)),
 	}
-	addContact.OnTapped = func() {
-		eType := widget.NewEntry()
-		eValue := widget.NewEntry()
-		dialog.ShowForm(
-			"Contact", "OK", "Cancel",
-			[]*widget.FormItem{
-				widget.NewFormItem("Type", eType),
-				widget.NewFormItem("Value", eValue),
-			},
-			func(b bool) {
-				if !b {
-					return
-				}
-			},
-			a.window,
-		)
-	}
-
+	form := widget.NewForm(items...)
 	for k, v := range acc.Contact {
-		btn := widget.NewButtonWithIcon("", theme.DeleteIcon(), func() {})
-		fi := widget.NewFormItem(
-			k,
-			container.NewHBox(widget.NewLabel(v), layout.NewSpacer(), btn),
-		)
-		items = append(items, fi)
+		addContactItem(form, k, v)
 	}
 
-	dlg := dialog.NewForm(
+	addContact.OnTapped = a.newContactItemAdder(form, acc.Contact)
+
+	dlg := dialog.NewCustomConfirm(
 		"Account", "OK", "Cancel",
-		items,
+		container.NewScroll(form),
 		func(b bool) {
 
 		},
@@ -97,4 +93,11 @@ func (a *App) editAccount(acc *types.Account) {
 
 	dlg.Resize(a.window.Canvas().Size())
 	dlg.Show()
+}
+
+func (a *App) newAccount() {
+	acc := &types.Account{
+		Contact: a.makeDefaultContacts(),
+	}
+	a.editAccount(acc)
 }

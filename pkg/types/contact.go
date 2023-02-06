@@ -19,6 +19,25 @@ const (
 	ContactDirector                  = "Director"
 )
 
+func DefaultContactTypes() []string {
+	return []string{
+		ContactFullName,
+		ContactName,
+		ContactPersonalCode,
+		ContactRegistrationNumber,
+		ContactCompanyRegistrationNumber,
+		ContactVAT,
+		ContactAddress,
+		ContactPhone,
+		ContactCellPhone,
+		ContactFax,
+		ContactEmail,
+		ContactBankAccount,
+		ContactWalletAddress,
+		ContactDirector,
+	}
+}
+
 func ParseContact(out map[string]string, vals []string) {
 	for _, c := range vals {
 		kv := strings.SplitN(c, "=", 2)
