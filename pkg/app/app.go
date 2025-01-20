@@ -15,6 +15,7 @@ type App struct {
 	sync.Mutex
 	app    fyne.App
 	window fyne.Window
+	tabs   *container.AppTabs
 	repo   repository.Repository
 
 	accounts  []*types.Account
@@ -62,17 +63,19 @@ func (a *App) Run() error {
 }
 
 func (a *App) makeContent() {
+	a.tabs = container.NewAppTabs(
+		container.NewTabItem(tabInvoicesName, a.newInvoicesContents()),
+		container.NewTabItem(tabProjectsName, a.newProjectsContents()),
+		container.NewTabItem(tabClientsName, a.newClientsContents()),
+		container.NewTabItem(tabAccountsName, a.newAccountsContents()),
+		container.NewTabItem(tabTemplatesName, a.newTemplatesContents()),
+	)
+
 	a.window.SetContent(
 		container.NewBorder(
 			a.makeMenu(), nil, // Top, Bottom
 			nil, nil, // Left, Right
-			container.NewAppTabs(
-				container.NewTabItem("Invoices", a.newInvoicesContents()),
-				container.NewTabItem("Projects", a.newProjectsContents()),
-				container.NewTabItem("Clients", a.newClientsContents()),
-				container.NewTabItem("Accounts", a.newAccountsContents()),
-				container.NewTabItem("Templates", a.newTemplatesContents()),
-			),
+			a.tabs,
 		),
 	)
 }

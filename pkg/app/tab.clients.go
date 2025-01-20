@@ -44,22 +44,22 @@ func (a *App) newClientsContents() fyne.CanvasObject {
 	return ret
 }
 
-func (a *App) editClient(acc *types.Client) {
+func (a *App) editClient(cl *types.Client) {
 	addContact := widget.NewButtonWithIcon("", theme.ContentAddIcon(), func() {})
 
 	eName := widget.NewEntry()
-	eName.Text = acc.Name
+	eName.Text = cl.Name
 	eDescription := widget.NewEntry()
-	eDescription.Text = acc.Description
+	eDescription.Text = cl.Description
 
 	eInvoiceFileFormat := widget.NewEntry()
-	eInvoiceFileFormat.Text = acc.InvoiceFileNameFormat
+	eInvoiceFileFormat.Text = cl.InvoiceFileNameFormat
 
 	eNotes := widget.NewMultiLineEntry()
-	eNotes.Text = strings.Join(acc.Notes, "\n")
+	eNotes.Text = strings.Join(cl.Notes, "\n")
 
 	items := []*widget.FormItem{
-		widget.NewFormItem("ID", widget.NewLabel(acc.Id)),
+		widget.NewFormItem("ID", widget.NewLabel(cl.Id)),
 		widget.NewFormItem("Name", eName),
 		widget.NewFormItem("Description", eDescription),
 		widget.NewFormItem("Invoice File Format", eInvoiceFileFormat),
@@ -67,11 +67,11 @@ func (a *App) editClient(acc *types.Client) {
 		widget.NewFormItem("Contacts:", container.NewHBox(layout.NewSpacer(), addContact)),
 	}
 	form := widget.NewForm(items...)
-	for k, v := range acc.Contact {
+	for k, v := range cl.Contact {
 		addContactItem(form, k, v)
 	}
 
-	addContact.OnTapped = a.newContactItemAdder(form, acc.Contact)
+	addContact.OnTapped = a.newContactItemAdder(form, cl.Contact)
 
 	dlg := dialog.NewCustomConfirm(
 		"Account", "OK", "Cancel",
@@ -84,4 +84,11 @@ func (a *App) editClient(acc *types.Client) {
 
 	dlg.Resize(a.window.Canvas().Size())
 	dlg.Show()
+}
+
+func (a *App) newClient() {
+	cl := &types.Client{
+		Contact: a.makeDefaultContacts(),
+	}
+	a.editClient(cl)
 }

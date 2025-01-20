@@ -3,6 +3,7 @@ package app
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
+	"github.com/itohio/phingo/pkg/types"
 )
 
 func (a *App) newProjectsContents() fyne.CanvasObject {
@@ -36,4 +37,12 @@ func (a *App) newProjectsContents() fyne.CanvasObject {
 	)
 
 	return ret
+}
+
+func (a *App) editProject(prj *types.Project) {
+}
+
+func (a *App) newProject() {
+	prj := &types.Project{}
+	a.editProject(prj)
 }

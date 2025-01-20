@@ -4,6 +4,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/widget"
 	"github.com/itohio/phingo/pkg/bi"
+	"github.com/itohio/phingo/pkg/types"
 )
 
 func (a *App) newInvoicesContents() fyne.CanvasObject {
@@ -52,4 +53,12 @@ func (a *App) newInvoicesContents() fyne.CanvasObject {
 	)
 
 	return ret
+}
+
+func (a *App) editInvoice(inv *types.Invoice) {
+}
+
+func (a *App) newInvoice() {
+	inv := &types.Invoice{}
+	a.editInvoice(inv)
 }
